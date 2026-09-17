@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Elite Tennis Club</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #050505;
+      color: #f5f5f5;
+    }
+    
+    .font-brand {
+      font-family: 'Cinzel', serif;
+    }
+
+    /* Silver Metallic Gradient Text */
+    .silver-gradient-text {
+      background: linear-gradient(135deg, #ffffff 0%, #a3a3a3 50%, #e5e5e5 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Silver Metallic Border */
+    .silver-border {
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    
+    .silver-border-glow {
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
+    }
+
+    .active-tab {
+      color: #ffffff;
+      border-bottom: 2px solid #ffffff;
+    }
+
+    .pulse-white {
+      box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.8);
+      animation: pulse-white 2s infinite;
+    }
+    
+    @keyframes pulse-white {
+      0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.8);
+      }
+      70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 8px rgba(255, 255, 255, 0);
+      }
+      100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+      }
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0a0a0a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #262626;
+      border-radius: 2px;
+    }
+  </style>
+</head>
+<body class="flex justify-center min-h-screen bg-black p-0 sm:p-4">
+
+  <!-- Mobile Frame Container -->
+  <div class="w-full max-w-md bg-neutral-950 min-h-screen sm:min-h-[844px] sm:h-[844px] sm:rounded-3xl flex flex-col justify-between overflow-hidden shadow-2xl border border-neutral-800 relative">
+    
+    <!-- Top Header -->
+    <header class="p-4 bg-black/90 backdrop-blur border-b border-neutral-800 sticky top-0 z-10 flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <div class="w-8 h-8 rounded-full bg-neutral-900 border border-neutral-700 flex items-center justify-center">
+          <i class="fa-solid fa-crown text-neutral-300 text-xs"></i>
+        </div>
+        <div>
+          <h1 class="text-base font-bold font-brand tracking-widest silver-gradient-text uppercase">Tennis League</h1>
+          <p class="text-[9px] text-neutral-500 uppercase tracking-wider">Exclusive Club</p>
+        </div>
+      </div>
+      <div class="text-[10px] text-neutral-400 bg-neutral-900 px-3 py-1 rounded-full border border-neutral-800 tracking-wider">
+        MEMBERS: <span id="total-players-count" class="text-white font-semibold">50</span>
+      </div>
+    </header>
+
+    <!-- Main Scrollable Content Area -->
+    <main class="flex-1 overflow-y-auto p-4 space-y-5">
+      
+      <!-- User Status Toggle Banner -->
+      <section class="bg-gradient-to-b from-neutral-900 to-black border border-neutral-800 rounded-2xl p-4 shadow-xl relative overflow-hidden">
+        <div class="absolute -right-10 -bottom-10 w-32 h-32 bg-neutral-800/20 rounded-full blur-2xl pointer-events-none"></div>
+        
+        <div class="flex items-center justify-between relative z-10">
+          <div class="flex items-center space-x-3.5">
+            <div class="relative">
+              <div class="w-12 h-12 rounded-full bg-neutral-900 border border-neutral-700 flex items-center justify-center text-white font-semibold text-sm shadow-inner">
+                IB
+              </div>
+              <span id="user-status-dot" class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-neutral-600 border-2 border-black rounded-full"></span>
+            </div>
+            <div>
+              <div class="text-[10px] text-neutral-400 uppercase tracking-widest">Player Status</div>
+              <div id="user-status-text" class="text-sm font-medium text-neutral-300">Not ready for match</div>
+            </div>
+          </div>
+          <button id="toggle-status-btn" onclick="toggleUserStatus()" class="px-4 py-2.5 bg-neutral-900 hover:bg-neutral-800 active:scale-95 text-white font-medium text-xs rounded-xl transition duration-300 border border-neutral-700 flex items-center space-x-2 shadow-lg">
+            <i class="fa-solid fa-power-off text-neutral-400 text-xs"></i>
+            <span id="toggle-btn-label" class="tracking-wide">Go On Court</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- View: Ready Players (Live) -->
+      <section id="view-ready" class="space-y-3">
+        <div class="flex justify-between items-center px-1">
+          <h2 class="text-xs font-semibold uppercase tracking-widest text-neutral-400 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-white pulse-white"></span> On Court Now
+          </h2>
+          <span id="ready-count-badge" class="text-[10px] bg-neutral-900 text-neutral-300 px-2.5 py-0.5 rounded-full border border-neutral-800 tracking-wider">0 players</span>
+        </div>
+        <div id="ready-players-list" class="space-y-2.5">
+          <!-- Dynamic Content -->
+        </div>
+      </section>
+
+      <!-- View: Rating (Leaderboard) -->
+      <section id="view-rating" class="space-y-3 hidden">
+        <div class="flex justify-between items-center px-1">
+          <h2 class="text-xs font-semibold uppercase tracking-widest text-neutral-400">Club Standings</h2>
+          <span class="text-[10px] text-neutral-500 uppercase tracking-wider">Elo Rating</span>
+        </div>
+        <div class="bg-neutral-900/60 rounded-2xl border border-neutral-800 overflow-hidden backdrop-blur">
+          <div class="grid grid-cols-12 text-[10px] font-semibold text-neutral-500 uppercase tracking-wider p-3 bg-neutral-900/90 border-b border-neutral-800">
+            <div class="col-span-2 text-center">Rank</div>
+            <div class="col-span-6">Member</div>
+            <div class="col-span-2 text-center">Points</div>
+            <div class="col-span-2 text-center">W / L</div>
+          </div>
+          <div id="leaderboard-list" class="divide-y divide-neutral-800/60 text-xs">
+            <!-- Dynamic Content -->
+          </div>
+        </div>
+      </section>
+
+      <!-- View: Matches History & Add Match -->
+      <section id="view-matches" class="space-y-4 hidden">
+        <!-- New Match Button -->
+        <button onclick="openMatchModal()" class="w-full py-3.5 bg-gradient-to-r from-neutral-200 via-white to-neutral-300 hover:from-white hover:to-neutral-200 text-black font-semibold text-xs uppercase tracking-widest rounded-xl shadow-xl transition active:scale-[0.99] flex items-center justify-center space-x-2 border border-white">
+          <i class="fa-solid fa-plus text-xs"></i>
+          <span>Record Match Result</span>
+        </button>
+
+        <div class="space-y-2.5">
+          <h2 class="text-xs font-semibold uppercase tracking-widest text-neutral-400 px-1">Match Archives</h2>
+          <div id="matches-history-list" class="space-y-2.5">
+            <!-- Dynamic Content -->
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="bg-black/95 backdrop-blur border-t border-neutral-800 grid grid-cols-3 p-2 sticky bottom-0 z-10">
+      <button id="nav-ready" onclick="switchTab('ready')" class="flex flex-col items-center py-2 px-2 active-tab transition">
+        <i class="fa-solid fa-circle-dot text-base mb-1"></i>
+        <span class="text-[10px] font-medium tracking-wider uppercase">On Court</span>
+      </button>
+      <button id="nav-rating" onclick="switchTab('rating')" class="flex flex-col items-center py-2 px-2 text-neutral-500 hover:text-neutral-300 transition">
+        <i class="fa-solid fa-trophy text-base mb-1"></i>
+        <span class="text-[10px] font-medium tracking-wider uppercase">Ranking</span>
+      </button>
+      <button id="nav-matches" onclick="switchTab('matches')" class="flex flex-col items-center py-2 px-2 text-neutral-500 hover:text-neutral-300 transition">
+        <i class="fa-solid fa-receipt text-base mb-1"></i>
+        <span class="text-[10px] font-medium tracking-wider uppercase">Matches</span>
+      </button>
+    </nav>
+
+    <!-- Modal Form: Add Match -->
+    <div id="match-modal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl w-full max-w-sm p-6 space-y-5 shadow-2xl relative">
+        <div class="flex justify-between items-center border-b border-neutral-800 pb-4">
+          <h3 class="font-semibold text-sm text-white tracking-wider uppercase flex items-center gap-2">
+            <i class="fa-solid fa-pen-nib text-neutral-400"></i> Match Entry
+          </h3>
+          <button onclick="closeMatchModal()" class="text-neutral-500 hover:text-white transition">
+            <i class="fa-solid fa-xmark text-base"></i>
+          </button>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-[10px] uppercase tracking-wider font-semibold text-neutral-400 mb-1.5">Winner</label>
+            <select id="p1-select" class="w-full bg-black border border-neutral-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-neutral-500">
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[10px] uppercase tracking-wider font-semibold text-neutral-400 mb-1.5">Opponent</label>
+            <select id="p2-select" class="w-full bg-black border border-neutral-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-neutral-500">
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[10px] uppercase tracking-wider font-semibold text-neutral-400 mb-1.5">Score (e.g. 6:4, 3:6, 10:8)</label>
+            <input id="score-input" type="text" placeholder="6:3, 6:4" class="w-full bg-black border border-neutral-800 rounded-xl p-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-neutral-500" />
+          </div>
+        </div>
+
+        <div class="flex space-x-3 pt-2">
+          <button onclick="closeMatchModal()" class="w-1/2 py-3 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-medium text-xs rounded-xl uppercase tracking-wider transition">Cancel</button>
+          <button onclick="submitMatch()" class="w-1/2 py-3 bg-white hover:bg-neutral-200 text-black font-semibold text-xs rounded-xl uppercase tracking-wider transition shadow-lg">Save Match</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // --- Mock Data ---
+    let currentUserIsReady = false;
+
+    let players = [
+      { id: 1, name: "Igor B.", rating: 1520, wins: 14, losses: 3, isReady: false, phone: "+1 (555) 011-2233" },
+      { id: 2, name: "Alex W.", rating: 1610, wins: 18, losses: 5, isReady: true, phone: "+1 (555) 022-3344" },
+      { id: 3, name: "Dmitry K.", rating: 1480, wins: 11, losses: 8, isReady: true, phone: "+1 (555) 033-4455" },
+      { id: 4, name: "Max G.", rating: 1420, wins: 8, losses: 10, isReady: true, phone: "+1 (555) 044-5566" },
+      { id: 5, name: "Sergey S.", rating: 1550, wins: 15, losses: 6, isReady: false, phone: "+1 (555) 055-6677" },
+      { id: 6, name: "Eugene N.", rating: 1390, wins: 6, losses: 12, isReady: false, phone: "+1 (555) 066-7788" },
+      { id: 7, name: "Andrew T.", rating: 1475, wins: 10, losses: 9, isReady: false, phone: "+1 (555) 077-8899" },
+      { id: 8, name: "Michael R.", rating: 1640, wins: 20, losses: 4, isReady: false, phone: "+1 (555) 088-9900" }
+    ];
+
+    for(let i = 9; i <= 50; i++) {
+      players.push({
+        id: i,
+        name: `Member ${i}`,
+        rating: 1200 + Math.floor(Math.random() * 400),
+        wins: Math.floor(Math.random() * 10),
+        losses: Math.floor(Math.random() * 10),
+        isReady: i === 12 || i === 25,
+        phone: `+1 (555) 000-${i < 10 ? '0' + i : i}`
+      });
+    }
+
+    let matches = [
+      { id: 1, winner: "Alex W.", loser: "Igor B.", score: "6:4, 3:6, 10:7", date: "Yesterday", eloDiff: 14 },
+      { id: 2, winner: "Michael R.", loser: "Sergey S.", score: "6:2, 6:3", date: "Sep 15", eloDiff: 12 },
+      { id: 3, winner: "Dmitry K.", loser: "Max G.", score: "7:5, 6:4", date: "Sep 14", eloDiff: 16 }
+    ];
+
+    // --- Functions ---
+
+    function switchTab(tab) {
+      document.getElementById('view-ready').classList.add('hidden');
+      document.getElementById('view-rating').classList.add('hidden');
+      document.getElementById('view-matches').classList.add('hidden');
+
+      document.getElementById('nav-ready').className = "flex flex-col items-center py-2 px-2 text-neutral-500 hover:text-neutral-300 transition";
+      document.getElementById('nav-rating').className = "flex flex-col items-center py-2 px-2 text-neutral-500 hover:text-neutral-300 transition";
+      document.getElementById('nav-matches').className = "flex flex-col items-center py-2 px-2 text-neutral-500 hover:text-neutral-300 transition";
+
+      if (tab === 'ready') {
+        document.getElementById('view-ready').classList.remove('hidden');
+        document.getElementById('nav-ready').className = "flex flex-col items-center py-2 px-2 active-tab transition";
+      } else if (tab === 'rating') {
+        document.getElementById('view-rating').classList.remove('hidden');
+        document.getElementById('nav-rating').className = "flex flex-col items-center py-2 px-2 active-tab transition";
+        renderLeaderboard();
+      } else if (tab === 'matches') {
+        document.getElementById('view-matches').classList.remove('hidden');
+        document.getElementById('nav-matches').className = "flex flex-col items-center py-2 px-2 active-tab transition";
+        renderMatches();
+      }
+    }
+
+    function toggleUserStatus() {
+      currentUserIsReady = !currentUserIsReady;
+      players[0].isReady = currentUserIsReady;
+
+      const dot = document.getElementById('user-status-dot');
+      const text = document.getElementById('user-status-text');
+      const btn = document.getElementById('toggle-status-btn');
+      const btnLabel = document.getElementById('toggle-btn-label');
+
+      if (currentUserIsReady) {
+        dot.className = "absolute bottom-0 right-0 w-3.5 h-3.5 bg-white border-2 border-black rounded-full pulse-white";
+        text.innerText = "Available for match";
+        text.className = "text-sm font-medium text-white";
+        btn.className = "px-4 py-2.5 bg-white text-black font-semibold text-xs rounded-xl transition duration-300 flex items-center space-x-2 shadow-lg";
+        btnLabel.innerText = "Set Offline";
+      } else {
+        dot.className = "absolute bottom-0 right-0 w-3.5 h-3.5 bg-neutral-600 border-2 border-black rounded-full";
+        text.innerText = "Not ready for match";
+        text.className = "text-sm font-medium text-neutral-300";
+        btn.className = "px-4 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white font-medium text-xs rounded-xl transition duration-300 border border-neutral-700 flex items-center space-x-2 shadow-lg";
+        btnLabel.innerText = "Go On Court";
+      }
+
+      renderReadyPlayers();
+    }
+
+    function renderReadyPlayers() {
+      const container = document.getElementById('ready-players-list');
+      const readyList = players.filter(p => p.isReady);
+      document.getElementById('ready-count-badge').innerText = `${readyList.length} members`;
+
+      if (readyList.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 bg-neutral-900/30 rounded-2xl border border-dashed border-neutral-800">
+            <i class="fa-solid fa-moon text-2xl text-neutral-700 mb-2"></i>
+            <p class="text-xs text-neutral-400 font-medium">No players currently on court.</p>
+            <p class="text-[10px] text-neutral-600 mt-1 uppercase tracking-wider">Toggle status to invite members</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = readyList.map(player => `
+        <div class="bg-gradient-to-r from-neutral-900 to-black border border-neutral-800 rounded-2xl p-4 flex items-center justify-between shadow-lg">
+          <div class="flex items-center space-x-3.5">
+            <div class="w-10 h-10 rounded-full bg-neutral-800 border border-neutral-700 flex items-center justify-center font-semibold text-white text-xs">
+              ${player.name.charAt(0)}
+            </div>
+            <div>
+              <div class="font-semibold text-xs text-white flex items-center gap-2">
+                ${player.name}
+                ${player.id === 1 ? '<span class="text-[9px] bg-neutral-800 text-neutral-300 border border-neutral-700 px-1.5 py-0.2 rounded uppercase tracking-wider">YOU</span>' : ''}
+              </div>
+              <div class="text-[11px] text-neutral-400 flex items-center gap-2 mt-0.5">
+                <span>Rating: <b class="text-neutral-200">${player.rating}</b></span>
+                <span>•</span>
+                <span class="text-white font-medium flex items-center gap-1"><i class="fa-solid fa-circle text-[6px]"></i> On Court</span>
+              </div>
+            </div>
+          </div>
+          ${player.id !== 1 ? `
+            <a href="tel:${player.phone}" class="w-9 h-9 bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 rounded-xl flex items-center justify-center text-white transition shadow-sm">
+              <i class="fa-solid fa-phone text-xs"></i>
+            </a>
+          ` : ''}
+        </div>
+      `).join('');
+    }
+
+    function renderLeaderboard() {
+      const container = document.getElementById('leaderboard-list');
+      const sorted = [...players].sort((a, b) => b.rating - a.rating);
+
+      container.innerHTML = sorted.map((player, index) => {
+        let rankBadge = `<span class="text-neutral-500 font-medium">${index + 1}</span>`;
+        if (index === 0) rankBadge = `<i class="fa-solid fa-crown text-white"></i>`;
+        if (index === 1) rankBadge = `<i class="fa-solid fa-award text-neutral-400"></i>`;
+        if (index === 2) rankBadge = `<i class="fa-solid fa-award text-neutral-600"></i>`;
+
+        return `
+          <div class="grid grid-cols-12 items-center p-3.5 ${player.id === 1 ? 'bg-neutral-800/40 border-l-2 border-white' : ''}">
+            <div class="col-span-2 text-center text-xs font-semibold">${rankBadge}</div>
+            <div class="col-span-6 font-medium text-xs text-neutral-200 flex items-center gap-1.5">
+              ${player.name}
+              ${player.isReady ? '<span class="w-1.5 h-1.5 rounded-full bg-white"></span>' : ''}
+            </div>
+            <div class="col-span-2 text-center text-xs font-bold text-white">${player.rating}</div>
+            <div class="col-span-2 text-center text-[10px] text-neutral-500">${player.wins}/${player.losses}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderMatches() {
+      const container = document.getElementById('matches-history-list');
+      container.innerHTML = matches.map(m => `
+        <div class="bg-neutral-900/80 border border-neutral-800 rounded-xl p-3.5 space-y-2">
+          <div class="flex justify-between text-[10px] text-neutral-500 uppercase tracking-wider">
+            <span>${m.date}</span>
+            <span class="text-white font-semibold">+${m.eloDiff} Elo</span>
+          </div>
+          <div class="flex justify-between items-center text-xs">
+            <div class="space-y-1">
+              <div class="font-semibold text-white flex items-center gap-2">
+                <i class="fa-solid fa-crown text-[10px] text-neutral-400"></i> ${m.winner}
+              </div>
+              <div class="text-neutral-400 pl-4">
+                ${m.loser}
+              </div>
+            </div>
+            <div class="bg-black px-3 py-1.5 rounded-lg text-xs font-mono font-bold text-white border border-neutral-800 shadow-inner">
+              ${m.score}
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Modal Operations
+    function openMatchModal() {
+      const p1Select = document.getElementById('p1-select');
+      const p2Select = document.getElementById('p2-select');
+
+      const options = players.map(p => `<option value="${p.id}">${p.name} (${p.rating})</option>`).join('');
+      p1Select.innerHTML = options;
+      p2Select.innerHTML = options;
+      if(players.length > 1) p2Select.selectedIndex = 1;
+
+      document.getElementById('match-modal').classList.remove('hidden');
+    }
+
+    function closeMatchModal() {
+      document.getElementById('match-modal').classList.add('hidden');
+    }
+
+    function submitMatch() {
+      const p1Id = parseInt(document.getElementById('p1-select').value);
+      const p2Id = parseInt(document.getElementById('p2-select').value);
+      const score = document.getElementById('score-input').value.trim();
+
+      if (p1Id === p2Id) {
+        alert("Please select two different players!");
+        return;
+      }
+      if (!score) {
+        alert("Please enter the score");
+        return;
+      }
+
+      const winner = players.find(p => p.id === p1Id);
+      const loser = players.find(p => p.id === p2Id);
+
+      // Elo Formula
+      const K = 32;
+      const expectedWinner = 1 / (1 + Math.pow(10, (loser.rating - winner.rating) / 400));
+      const eloGain = Math.round(K * (1 - expectedWinner));
+
+      winner.rating += eloGain;
+      loser.rating = Math.max(800, loser.rating - eloGain);
+      winner.wins += 1;
+      loser.losses += 1;
+
+      matches.unshift({
+        id: matches.length + 1,
+        winner: winner.name,
+        loser: loser.name,
+        score: score,
+        date: "Just now",
+        eloDiff: eloGain
+      });
+
+      closeMatchModal();
+      renderMatches();
+      renderLeaderboard();
+    }
+
+    // Init
+    document.getElementById('total-players-count').innerText = players.length;
+    renderReadyPlayers();
+  </script>
+</body>
+</html>

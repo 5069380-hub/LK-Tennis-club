@@ -26,38 +26,29 @@
       -webkit-text-fill-color: transparent;
     }
 
-    /* Silver Metallic Border */
-    .silver-border {
-      border: 1px solid rgba(255, 255, 255, 0.15);
-    }
-    
-    .silver-border-glow {
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      box-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
-    }
-
     .active-tab {
       color: #ffffff;
       border-bottom: 2px solid #ffffff;
     }
 
-    .pulse-white {
-      box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.8);
-      animation: pulse-white 2s infinite;
+    /* Pulse animation for Green Status */
+    .pulse-green {
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.8);
+      animation: pulse-green 2s infinite;
     }
     
-    @keyframes pulse-white {
+    @keyframes pulse-green {
       0% {
         transform: scale(0.95);
-        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.8);
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.8);
       }
       70% {
         transform: scale(1);
-        box-shadow: 0 0 0 8px rgba(255, 255, 255, 0);
+        box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
       }
       100% {
         transform: scale(0.95);
-        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
       }
     }
 
@@ -108,15 +99,15 @@
               <div class="w-12 h-12 rounded-full bg-neutral-900 border border-neutral-700 flex items-center justify-center text-white font-semibold text-sm shadow-inner">
                 IB
               </div>
-              <span id="user-status-dot" class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-neutral-600 border-2 border-black rounded-full"></span>
+              <span id="user-status-dot" class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-red-500 border-2 border-black rounded-full"></span>
             </div>
             <div>
               <div class="text-[10px] text-neutral-400 uppercase tracking-widest">Player Status</div>
-              <div id="user-status-text" class="text-sm font-medium text-neutral-300">Not ready for match</div>
+              <div id="user-status-text" class="text-sm font-medium text-red-400">Not ready for match</div>
             </div>
           </div>
-          <button id="toggle-status-btn" onclick="toggleUserStatus()" class="px-4 py-2.5 bg-neutral-900 hover:bg-neutral-800 active:scale-95 text-white font-medium text-xs rounded-xl transition duration-300 border border-neutral-700 flex items-center space-x-2 shadow-lg">
-            <i class="fa-solid fa-power-off text-neutral-400 text-xs"></i>
+          <button id="toggle-status-btn" onclick="toggleUserStatus()" class="px-4 py-2.5 bg-red-600/20 border border-red-500/50 hover:bg-red-600/30 text-red-300 font-medium text-xs rounded-xl transition duration-300 flex items-center space-x-2 shadow-lg">
+            <i class="fa-solid fa-power-off text-red-400 text-xs"></i>
             <span id="toggle-btn-label" class="tracking-wide">Go On Court</span>
           </button>
         </div>
@@ -126,7 +117,7 @@
       <section id="view-ready" class="space-y-3">
         <div class="flex justify-between items-center px-1">
           <h2 class="text-xs font-semibold uppercase tracking-widest text-neutral-400 flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-white pulse-white"></span> On Court Now
+            <span class="w-2 h-2 rounded-full bg-emerald-500 pulse-green"></span> On Court Now
           </h2>
           <span id="ready-count-badge" class="text-[10px] bg-neutral-900 text-neutral-300 px-2.5 py-0.5 rounded-full border border-neutral-800 tracking-wider">0 players</span>
         </div>
@@ -296,16 +287,16 @@
       const btnLabel = document.getElementById('toggle-btn-label');
 
       if (currentUserIsReady) {
-        dot.className = "absolute bottom-0 right-0 w-3.5 h-3.5 bg-white border-2 border-black rounded-full pulse-white";
+        dot.className = "absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-black rounded-full pulse-green";
         text.innerText = "Available for match";
-        text.className = "text-sm font-medium text-white";
-        btn.className = "px-4 py-2.5 bg-white text-black font-semibold text-xs rounded-xl transition duration-300 flex items-center space-x-2 shadow-lg";
+        text.className = "text-sm font-medium text-emerald-400";
+        btn.className = "px-4 py-2.5 bg-emerald-600/20 border border-emerald-500/50 hover:bg-emerald-600/30 text-emerald-300 font-medium text-xs rounded-xl transition duration-300 flex items-center space-x-2 shadow-lg";
         btnLabel.innerText = "Set Offline";
       } else {
-        dot.className = "absolute bottom-0 right-0 w-3.5 h-3.5 bg-neutral-600 border-2 border-black rounded-full";
+        dot.className = "absolute bottom-0 right-0 w-3.5 h-3.5 bg-red-500 border-2 border-black rounded-full";
         text.innerText = "Not ready for match";
-        text.className = "text-sm font-medium text-neutral-300";
-        btn.className = "px-4 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white font-medium text-xs rounded-xl transition duration-300 border border-neutral-700 flex items-center space-x-2 shadow-lg";
+        text.className = "text-sm font-medium text-red-400";
+        btn.className = "px-4 py-2.5 bg-red-600/20 border border-red-500/50 hover:bg-red-600/30 text-red-300 font-medium text-xs rounded-xl transition duration-300 flex items-center space-x-2 shadow-lg";
         btnLabel.innerText = "Go On Court";
       }
 
@@ -342,7 +333,7 @@
               <div class="text-[11px] text-neutral-400 flex items-center gap-2 mt-0.5">
                 <span>Rating: <b class="text-neutral-200">${player.rating}</b></span>
                 <span>•</span>
-                <span class="text-white font-medium flex items-center gap-1"><i class="fa-solid fa-circle text-[6px]"></i> On Court</span>
+                <span class="text-emerald-400 font-medium flex items-center gap-1"><i class="fa-solid fa-circle text-[6px]"></i> On Court</span>
               </div>
             </div>
           </div>
@@ -370,7 +361,7 @@
             <div class="col-span-2 text-center text-xs font-semibold">${rankBadge}</div>
             <div class="col-span-6 font-medium text-xs text-neutral-200 flex items-center gap-1.5">
               ${player.name}
-              ${player.isReady ? '<span class="w-1.5 h-1.5 rounded-full bg-white"></span>' : ''}
+              ${player.isReady ? '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>' : ''}
             </div>
             <div class="col-span-2 text-center text-xs font-bold text-white">${player.rating}</div>
             <div class="col-span-2 text-center text-[10px] text-neutral-500">${player.wins}/${player.losses}</div>

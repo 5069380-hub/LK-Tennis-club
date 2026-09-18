@@ -148,11 +148,22 @@
 
 
   <!-- Modal: Edit Profile / Questionnaire -->
+  <!-- Modal: Edit Profile / Questionnaire -->
   <div id="edit-profile-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-xl p-6 max-w-md w-full space-y-4 shadow-xl max-h-[90vh] overflow-y-auto">
-      <h3 class="text-lg font-bold text-slate-800">Edit Questionnaire</h3>
+    <div class="bg-white rounded-xl p-6 max-w-md w-full space-y-4 shadow-xl max-h-[90vh] overflow-y-auto relative">
       
-      <form id="edit-profile-form" onsubmit="saveProfileQuestionnaire(event)" class="space-y-3 text-xs">
+      <!-- Шапка с центрированной кнопкой сохранения и крестиком -->
+      <div class="flex justify-between items-center border-b pb-3 sticky top-0 bg-white z-10">
+        <h3 class="text-lg font-bold text-slate-800">Edit Questionnaire</h3>
+        <div class="flex items-center gap-3">
+          <button type="submit" form="edit-profile-form" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 py-1.5 rounded-lg transition shadow-sm">
+            Save
+          </button>
+          <button onclick="closeEditProfileModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold px-1">&times;</button>
+        </div>
+      </div>
+      
+      <form id="edit-profile-form" onsubmit="saveProfileQuestionnaire(event)" class="space-y-3 text-xs pb-10">
         <div>
           <label class="block font-medium text-slate-600 mb-1">Full Name</label>
           <input type="text" id="edit-name" required class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
@@ -182,6 +193,16 @@
         </div>
         <div class="grid grid-cols-2 gap-2">
           <div>
+            <label class="block font-medium text-slate-600 mb-1">Height</label>
+            <input type="text" id="edit-height" placeholder="e.g. 180 cm" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+          <div>
+            <label class="block font-medium text-slate-600 mb-1">Weight</label>
+            <input type="text" id="edit-weight" placeholder="e.g. 75 kg" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
             <label class="block font-medium text-slate-600 mb-1">Handedness</label>
             <select id="edit-hand" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
               <option value="">Select Hand</option>
@@ -200,24 +221,20 @@
         </div>
         <div>
           <label class="block font-medium text-slate-600 mb-1">Racket & Setup</label>
-          <input type="text" id="edit-racket" placeholder="e.g. Wilson Blade 98 v8" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+          <input type="text" id="edit-racket" placeholder="e.g. Wilson Blade 98" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
         <div>
           <label class="block font-medium text-slate-600 mb-1">Preferred Locations / Courts</label>
-          <input type="text" id="edit-locations" placeholder="e.g. Central Park Courts, West Side" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+          <input type="text" id="edit-locations" placeholder="e.g. Central Park" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
         <div>
           <label class="block font-medium text-slate-600 mb-1">Preferred Play Time</label>
-          <input type="text" id="edit-times" placeholder="e.g. Weekday evenings, Sunday morning" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+          <input type="text" id="edit-times" placeholder="e.g. Evenings" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
-
-        <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded-lg font-medium hover:bg-indigo-700 transition mt-2">
-          Save Questionnaire
-        </button>
       </form>
-      <button onclick="closeEditProfileModal()" class="w-full text-center text-xs text-slate-400 mt-2">Cancel</button>
     </div>
   </div>
+
   <!-- Modal: Auth / Registration -->
   <div id="auth-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
     <div class="bg-white rounded-xl p-6 max-w-sm w-full space-y-4 shadow-xl">

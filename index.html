@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tennis Club Ranking & Matches</title>
+  <title>Tennis Club Ranking & Profile</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -16,12 +16,12 @@
   <header class="bg-indigo-900 text-white p-4 shadow-md flex justify-between items-center">
     <h1 class="text-xl font-bold tracking-wide">Tennis Club</h1>
     <div id="authContainer">
-      <button id="loginBtn" onclick="toggleAuthModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-3 py-1.5 rounded-lg transition">
+      <button id="loginBtn" onclick="toggleAuthModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 py-1.5 rounded-lg transition font-medium">
         Sign In
       </button>
       <div id="userInfo" class="hidden flex items-center space-x-2">
         <span id="userEmail" class="text-xs text-indigo-200"></span>
-        <button onclick="logout()" class="bg-red-600 hover:bg-red-700 text-white text-xs px-2.5 py-1 rounded transition">Logout</button>
+        <button onclick="logout()" class="bg-rose-600 hover:bg-rose-700 text-white text-xs px-2.5 py-1 rounded transition">Logout</button>
       </div>
     </div>
   </header>
@@ -36,11 +36,9 @@
 
     <!-- Rankings Tab -->
     <section id="rankingsSection">
-      <h2 class="text-lg font-semibold mb-3 flex items-center justify-between">
-        <span>Player Standings</span>
-      </h2>
+      <h2 class="text-lg font-semibold mb-3">Player Standings</h2>
       <div id="playersList" class="space-y-2">
-        <!-- Players loaded dynamically -->
+        <div class="text-center text-gray-400 py-4 text-sm">Loading players...</div>
       </div>
     </section>
 
@@ -53,7 +51,7 @@
         </button>
       </div>
       <div id="matchesList" class="space-y-2">
-        <!-- Matches loaded dynamically -->
+        <div class="text-center text-gray-400 py-4 text-sm">Loading matches...</div>
       </div>
     </section>
 
@@ -69,7 +67,7 @@
         <h3 id="profName" class="text-2xl font-bold text-gray-900"></h3>
         <p id="profPhone" class="text-xs text-gray-500 mt-0.5"></p>
         <div class="inline-block bg-indigo-50 px-3 py-1 rounded-full text-indigo-700 font-bold text-sm mt-2">
-          Elo Rating: <span id="profElo"></span>
+          Elo Rating: <span id="profElo">1500</span>
         </div>
       </div>
 
@@ -89,21 +87,21 @@
         </div>
       </div>
 
-      <!-- Bio / Info Details -->
+      <!-- Bio / Details -->
       <div class="bg-gray-50 rounded-xl p-4 mb-6 text-sm space-y-2">
         <h4 class="font-semibold text-gray-700 border-b pb-1 mb-2 text-xs uppercase tracking-wider">Player Info</h4>
         <div class="grid grid-cols-2 gap-2 text-xs">
-          <div><span class="text-gray-400">NTRP Self-Rating:</span> <span id="profNtrp" class="font-medium">N/A</span></div>
-          <div><span class="text-gray-400">Age:</span> <span id="profAge" class="font-medium">N/A</span></div>
-          <div><span class="text-gray-400">Plays:</span> <span id="profHand" class="font-medium">N/A</span></div>
-          <div><span class="text-gray-400">Backhand:</span> <span id="profBackhand" class="font-medium">N/A</span></div>
+          <div><span class="text-gray-400">NTRP Self-Rating:</span> <span id="profNtrp" class="font-medium text-gray-800">N/A</span></div>
+          <div><span class="text-gray-400">Age:</span> <span id="profAge" class="font-medium text-gray-800">N/A</span></div>
+          <div><span class="text-gray-400">Plays:</span> <span id="profHand" class="font-medium text-gray-800">N/A</span></div>
+          <div><span class="text-gray-400">Backhand:</span> <span id="profBackhand" class="font-medium text-gray-800">N/A</span></div>
         </div>
-        <div class="text-xs pt-1"><span class="text-gray-400">Racket:</span> <span id="profRacket" class="font-medium">N/A</span></div>
-        <div class="text-xs"><span class="text-gray-400">Preferred Courts:</span> <span id="profLocations" class="font-medium">N/A</span></div>
-        <div class="text-xs"><span class="text-gray-400">Preferred Time:</span> <span id="profTimes" class="font-medium">N/A</span></div>
+        <div class="text-xs pt-1"><span class="text-gray-400">Racket:</span> <span id="profRacket" class="font-medium text-gray-800">N/A</span></div>
+        <div class="text-xs"><span class="text-gray-400">Preferred Courts:</span> <span id="profLocations" class="font-medium text-gray-800">N/A</span></div>
+        <div class="text-xs"><span class="text-gray-400">Preferred Time:</span> <span id="profTimes" class="font-medium text-gray-800">N/A</span></div>
       </div>
 
-      <!-- Action: Edit Profile (visible only to profile owner) -->
+      <!-- Edit Profile Button (visible to owner) -->
       <button id="editProfileBtn" onclick="openEditProfileModal()" class="w-full mb-4 hidden bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-xl text-sm font-medium transition">
         Edit Profile
       </button>
@@ -132,7 +130,7 @@
         <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">Age</label>
-            <input type="number" id="editAge" placeholder="e.g. 32" class="w-full border rounded-lg p-2 text-xs">
+            <input type="number" id="editAge" placeholder="e.g. 30" class="w-full border rounded-lg p-2 text-xs">
           </div>
           <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">NTRP Rating</label>
@@ -185,7 +183,7 @@
     </div>
   </div>
 
-  <!-- Sign In / Auth Modal -->
+  <!-- Auth Modal -->
   <div id="authModal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-2xl max-w-xs w-full p-6 shadow-2xl relative">
       <button onclick="toggleAuthModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-lg font-bold">&times;</button>
@@ -206,9 +204,8 @@
   </div>
 
   <script>
-    // Firebase Config (Replace with your own project config if needed)
     const firebaseConfig = {
-      apiKey: "AIzaSyDummyKeyForTemplate",
+      apiKey: "AIzaSyC93VsSVGfh14n2u3JShZ53-JJCqTiDvOs",
       authDomain: "lk-tennis-club.firebaseapp.com",
       projectId: "lk-tennis-club",
       storageBucket: "lk-tennis-club.appspot.com",
@@ -222,6 +219,8 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
 
+    let playersMap = {};
+    let allMatches = [];
     let currentUserId = null;
     let currentProfilePlayerId = null;
     let isSignUpMode = false;
@@ -238,12 +237,173 @@
         document.getElementById('loginBtn').classList.remove('hidden');
         document.getElementById('userInfo').classList.add('hidden');
       }
+      if (currentProfilePlayerId) updateEditBtnVisibility();
     });
 
-    function toggleAuthModal() {
-      document.getElementById('authModal').classList.toggle('hidden');
+    // Load Data
+    function initData() {
+      db.collection('players').onSnapshot(snapshot => {
+        playersMap = {};
+        const listEl = document.getElementById('playersList');
+        listEl.innerHTML = '';
+
+        let players = [];
+        snapshot.forEach(doc => {
+          const p = { id: doc.id, ...doc.data() };
+          playersMap[doc.id] = p;
+          players.push(p);
+        });
+
+        players.sort((a, b) => (b.elo || 1500) - (a.elo || 1500));
+
+        players.forEach((p, index) => {
+          const card = document.createElement('div');
+          card.className = "bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer hover:border-indigo-300 transition";
+          card.onclick = () => openProfile(p.id);
+
+          const photo = p.photoURL || 'https://via.placeholder.com/50?text=Tennis';
+
+          card.innerHTML = `
+            <div class="flex items-center space-x-3">
+              <span class="font-bold text-gray-400 w-5 text-center text-sm">#${index + 1}</span>
+              <img src="${photo}" class="w-10 h-10 rounded-full object-cover border">
+              <div>
+                <div class="font-semibold text-sm text-gray-900">${p.name || 'Unnamed Player'}</div>
+                <div class="text-[11px] text-gray-400">${p.phone || ''}</div>
+              </div>
+            </div>
+            <div class="font-bold text-indigo-600 text-base">${p.elo || 1500}</div>
+          `;
+          listEl.appendChild(card);
+        });
+      });
+
+      db.collection('matches').orderBy('timestamp', 'desc').onSnapshot(snapshot => {
+        allMatches = [];
+        const matchesEl = document.getElementById('matchesList');
+        matchesEl.innerHTML = '';
+
+        snapshot.forEach(doc => {
+          const m = { id: doc.id, ...doc.data() };
+          allMatches.push(m);
+
+          const card = document.createElement('div');
+          card.className = "bg-white p-3 rounded-xl shadow-sm border border-gray-100 text-xs space-y-1";
+          
+          const p1Name = playersMap[m.player1Id]?.name || 'Player 1';
+          const p2Name = playersMap[m.player2Id]?.name || 'Player 2';
+
+          card.innerHTML = `
+            <div class="flex justify-between font-medium">
+              <span class="text-indigo-900 font-bold">${p1Name} (${m.p1EloDiff > 0 ? '+' : ''}${m.p1EloDiff || 0})</span>
+              <span class="text-gray-400">vs</span>
+              <span class="text-indigo-900 font-bold">${p2Name} (${m.p2EloDiff > 0 ? '+' : ''}${m.p2EloDiff || 0})</span>
+            </div>
+            <div class="text-center font-semibold text-indigo-600">${m.score || ''}</div>
+          `;
+          matchesEl.appendChild(card);
+        });
+      });
     }
 
+    // Profile View
+    function openProfile(playerId) {
+      currentProfilePlayerId = playerId;
+      const p = playersMap[playerId];
+      if (!p) return;
+
+      document.getElementById('profPhoto').src = p.photoURL || 'https://via.placeholder.com/100?text=Tennis';
+      document.getElementById('profName').textContent = p.name || 'Player Profile';
+      document.getElementById('profPhone').textContent = p.phone ? `Phone: ${p.phone}` : '';
+      document.getElementById('profElo').textContent = p.elo || 1500;
+
+      document.getElementById('profNtrp').textContent = p.selfRating || 'N/A';
+      document.getElementById('profAge').textContent = p.age || 'N/A';
+      document.getElementById('profHand').textContent = p.hand || 'N/A';
+      document.getElementById('profBackhand').textContent = p.backhand || 'N/A';
+      document.getElementById('profRacket').textContent = p.racket || 'N/A';
+      document.getElementById('profLocations').textContent = p.locations || 'N/A';
+      document.getElementById('profTimes').textContent = p.times || 'N/A';
+
+      // Prefill edit form
+      document.getElementById('editPhotoURL').value = p.photoURL || '';
+      document.getElementById('editAge').value = p.age || '';
+      document.getElementById('editNtrp').value = p.selfRating || '';
+      document.getElementById('editHand').value = p.hand || '';
+      document.getElementById('editBackhand').value = p.backhand || '';
+      document.getElementById('editRacket').value = p.racket || '';
+      document.getElementById('editLocations').value = p.locations || '';
+      document.getElementById('editTimes').value = p.times || '';
+
+      // Match Stats
+      const playerMatches = allMatches.filter(m => m.player1Id === playerId || m.player2Id === playerId);
+      let wins = 0, losses = 0;
+
+      const historyEl = document.getElementById('profHistory');
+      historyEl.innerHTML = '';
+
+      playerMatches.forEach(m => {
+        const isP1 = m.player1Id === playerId;
+        const isWinner = (isP1 && m.winnerId === m.player1Id) || (!isP1 && m.winnerId === m.player2Id);
+        if (isWinner) wins++; else losses++;
+
+        const oppId = isP1 ? m.player2Id : m.player1Id;
+        const oppName = playersMap[oppId]?.name || 'Opponent';
+        const eloDiff = isP1 ? m.p1EloDiff : m.p2EloDiff;
+
+        const row = document.createElement('div');
+        row.className = "flex justify-between items-center bg-gray-50 p-2 rounded-lg text-xs";
+        row.innerHTML = `
+          <span>vs <b>${oppName}</b></span>
+          <span class="font-medium ${isWinner ? 'text-emerald-600' : 'text-rose-600'}">${m.score} (${eloDiff > 0 ? '+' : ''}${eloDiff || 0})</span>
+        `;
+        historyEl.appendChild(row);
+      });
+
+      document.getElementById('profMatches').textContent = playerMatches.length;
+      document.getElementById('profWins').textContent = wins;
+      document.getElementById('profLosses').textContent = losses;
+
+      updateEditBtnVisibility();
+      document.getElementById('profileModal').classList.remove('hidden');
+    }
+
+    function updateEditBtnVisibility() {
+      const btn = document.getElementById('editProfileBtn');
+      if (currentUserId && (currentUserId === currentProfilePlayerId || playersMap[currentProfilePlayerId]?.uid === currentUserId)) {
+        btn.classList.remove('hidden');
+      } else {
+        btn.classList.add('hidden');
+      }
+    }
+
+    async function saveProfile(e) {
+      e.preventDefault();
+      if (!currentProfilePlayerId) return;
+
+      const updatedData = {
+        photoURL: document.getElementById('editPhotoURL').value,
+        age: document.getElementById('editAge').value,
+        selfRating: document.getElementById('editNtrp').value,
+        hand: document.getElementById('editHand').value,
+        backhand: document.getElementById('editBackhand').value,
+        racket: document.getElementById('editRacket').value,
+        locations: document.getElementById('editLocations').value,
+        times: document.getElementById('editTimes').value,
+        uid: currentUserId || playersMap[currentProfilePlayerId]?.uid || ''
+      };
+
+      try {
+        await db.collection('players').doc(currentProfilePlayerId).update(updatedData);
+        closeEditModal();
+        openProfile(currentProfilePlayerId);
+      } catch (err) {
+        alert("Error saving profile: " + err.message);
+      }
+    }
+
+    // Auth Actions
+    function toggleAuthModal() { document.getElementById('authModal').classList.toggle('hidden'); }
     function toggleAuthMode() {
       isSignUpMode = !isSignUpMode;
       document.getElementById('authTitle').textContent = isSignUpMode ? 'Sign Up' : 'Sign In';
@@ -267,40 +427,11 @@
       }
     }
 
-    function logout() {
-      auth.signOut();
-    }
+    function logout() { auth.signOut(); }
 
-    // Modal Helpers
     function closeProfileModal() { document.getElementById('profileModal').classList.add('hidden'); }
     function closeEditModal() { document.getElementById('editModal').classList.add('hidden'); }
     function openEditProfileModal() { document.getElementById('editModal').classList.remove('hidden'); }
-
-    // Save Edit Profile Form
-    async function saveProfile(e) {
-      e.preventDefault();
-      if (!currentProfilePlayerId) return;
-
-      const updatedData = {
-        photoURL: document.getElementById('editPhotoURL').value || '',
-        age: document.getElementById('editAge').value || '',
-        selfRating: document.getElementById('editNtrp').value || '',
-        hand: document.getElementById('editHand').value || '',
-        backhand: document.getElementById('editBackhand').value || '',
-        racket: document.getElementById('editRacket').value || '',
-        locations: document.getElementById('editLocations').value || '',
-        times: document.getElementById('editTimes').value || ''
-      };
-
-      try {
-        await db.collection('players').doc(currentProfilePlayerId).update(updatedData);
-        closeEditModal();
-        alert('Profile updated successfully!');
-      } catch (err) {
-        console.error(err);
-        alert('Failed to update profile.');
-      }
-    }
 
     function switchTab(tab) {
       const rankings = document.getElementById('rankingsSection');
@@ -320,6 +451,9 @@
         tabR.className = "flex-1 py-3 text-center font-medium text-gray-500";
       }
     }
+
+    // Start App
+    window.addEventListener('DOMContentLoaded', initData);
   </script>
 </body>
 </html>

@@ -11,7 +11,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <link rel="icon" type="image/png" href="IMG_20260917_160556.png">
   <link rel="apple-touch-icon" href="IMG_20260917_160556.png">
-
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
 
@@ -83,13 +82,16 @@
 
   </main>
 
-  <!-- Modal: Player Stats & Matches -->
+  <!-- Modal: Player Profile & Stats -->
   <div id="stats-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-xl p-6 max-w-md w-full space-y-4 shadow-xl max-h-[90vh] overflow-y-auto">
+    <div class="bg-white rounded-xl p-6 max-w-md w-full space-y-4 shadow-xl max-h-[90vh] overflow-y-auto relative">
       <div class="flex justify-between items-start border-b pb-3">
-        <div>
-          <h3 id="stats-player-name" class="text-xl font-bold text-slate-800">Player Name</h3>
-          <p id="stats-player-phone" class="text-xs text-slate-500"></p>
+        <div class="flex items-center gap-3">
+          <img id="stats-player-photo" src="https://via.placeholder.com/80?text=Tennis" class="w-16 h-16 rounded-full object-cover border-2 border-indigo-200 shadow-sm">
+          <div>
+            <h3 id="stats-player-name" class="text-xl font-bold text-slate-800">Player Name</h3>
+            <p id="stats-player-phone" class="text-xs text-slate-500"></p>
+          </div>
         </div>
         <div class="text-right">
           <span id="stats-player-elo" class="text-xl font-bold text-indigo-600">1500</span>
@@ -113,6 +115,25 @@
         </div>
       </div>
 
+      <!-- Player Questionnaire / Profile Info -->
+      <div class="bg-slate-50 rounded-lg p-3 text-xs space-y-2 border border-slate-200">
+        <h4 class="font-bold text-slate-700 border-b pb-1 text-[11px] uppercase tracking-wider">Player Questionnaire</h4>
+        <div class="grid grid-cols-2 gap-2">
+          <div><span class="text-slate-400">NTRP Rating:</span> <span id="stats-ntrp" class="font-medium text-slate-800">N/A</span></div>
+          <div><span class="text-slate-400">Age:</span> <span id="stats-age" class="font-medium text-slate-800">N/A</span></div>
+          <div><span class="text-slate-400">Hand:</span> <span id="stats-hand" class="font-medium text-slate-800">N/A</span></div>
+          <div><span class="text-slate-400">Backhand:</span> <span id="stats-backhand" class="font-medium text-slate-800">N/A</span></div>
+        </div>
+        <div class="pt-1"><span class="text-slate-400">Racket & Setup:</span> <span id="stats-racket" class="font-medium text-slate-800">N/A</span></div>
+        <div><span class="text-slate-400">Preferred Courts:</span> <span id="stats-locations" class="font-medium text-slate-800">N/A</span></div>
+        <div><span class="text-slate-400">Preferred Play Time:</span> <span id="stats-times" class="font-medium text-slate-800">N/A</span></div>
+      </div>
+
+      <!-- Edit Profile Button (Visible only to profile owner) -->
+      <button id="edit-profile-btn" onclick="openEditProfileModal()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg text-xs font-semibold hidden transition">
+        Edit Questionnaire
+      </button>
+
       <!-- Player's Matches -->
       <div class="space-y-2 pt-2">
         <h4 class="text-sm font-bold text-slate-700">Match History</h4>
@@ -122,6 +143,73 @@
       </div>
 
       <button onclick="closeStatsModal()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 rounded-lg text-xs font-semibold mt-2">Close</button>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Profile / Questionnaire -->
+  <div id="edit-profile-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl p-6 max-w-md w-full space-y-4 shadow-xl max-h-[90vh] overflow-y-auto">
+      <h3 class="text-lg font-bold text-slate-800">Edit Questionnaire</h3>
+      
+      <form id="edit-profile-form" onsubmit="saveProfileQuestionnaire(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-medium text-slate-600 mb-1">Photo URL</label>
+          <input type="url" id="edit-photoURL" placeholder="https://example.com/photo.jpg" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-medium text-slate-600 mb-1">Age</label>
+            <input type="number" id="edit-age" placeholder="e.g. 32" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+          <div>
+            <label class="block font-medium text-slate-600 mb-1">NTRP Rating</label>
+            <select id="edit-ntrp" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="">Select NTRP</option>
+              <option value="2.5">2.5 (Beginner)</option>
+              <option value="3.0">3.0 (Intermediate)</option>
+              <option value="3.5">3.5 (Intermediate+)</option>
+              <option value="4.0">4.0 (Advanced)</option>
+              <option value="4.5">4.5 (Advanced+)</option>
+              <option value="5.0">5.0 (Expert)</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-medium text-slate-600 mb-1">Handedness</label>
+            <select id="edit-hand" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="">Select Hand</option>
+              <option value="Right-handed">Right-handed</option>
+              <option value="Left-handed">Left-handed</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-medium text-slate-600 mb-1">Backhand</label>
+            <select id="edit-backhand" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="">Select Backhand</option>
+              <option value="Two-handed">Two-handed</option>
+              <option value="One-handed">One-handed</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block font-medium text-slate-600 mb-1">Racket & Setup</label>
+          <input type="text" id="edit-racket" placeholder="e.g. Wilson Blade 98 v8" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-600 mb-1">Preferred Locations / Courts</label>
+          <input type="text" id="edit-locations" placeholder="e.g. Central Park Courts, West Side" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-600 mb-1">Preferred Play Time</label>
+          <input type="text" id="edit-times" placeholder="e.g. Weekday evenings, Sunday morning" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+
+        <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded-lg font-medium hover:bg-indigo-700 transition mt-2">
+          Save Questionnaire
+        </button>
+      </form>
+      <button onclick="closeEditProfileModal()" class="w-full text-center text-xs text-slate-400 mt-2">Cancel</button>
     </div>
   </div>
 
@@ -229,6 +317,7 @@
     let isRegisterMode = false;
     let allUsers = [];
     let allMatches = [];
+    let selectedPlayerIdForStats = null;
 
     // Auth state tracking
     auth.onAuthStateChanged(async (user) => {
@@ -331,11 +420,14 @@
           const u = { id: doc.id, ...doc.data() };
           allUsers.push(u);
 
-          // All players list (Leaderboard) - Clickable for stats
+          const photo = u.photoURL || 'https://via.placeholder.com/50?text=Tennis';
+
+          // All players list (Leaderboard)
           playersList.innerHTML += `
             <div onclick="openPlayerStats('${u.id}')" class="bg-white p-3 rounded-lg border border-slate-200 flex justify-between items-center shadow-sm cursor-pointer hover:border-indigo-300 transition">
               <div class="flex items-center gap-3">
                 <span class="font-bold text-slate-400 w-5 text-center">${rank++}</span>
+                <img src="${photo}" class="w-10 h-10 rounded-full object-cover border">
                 <div>
                   <div class="font-semibold text-slate-800 flex items-center gap-1.5">
                     ${u.name}
@@ -355,9 +447,12 @@
           if (u.isReady) {
             readyList.innerHTML += `
               <div class="bg-white p-3 rounded-lg border border-emerald-200 flex justify-between items-center shadow-sm">
-                <div>
-                  <div class="font-semibold text-slate-800">${u.name}</div>
-                  <div class="text-xs text-slate-500">Phone: ${u.phone || 'Not specified'}</div>
+                <div class="flex items-center gap-3">
+                  <img src="${photo}" class="w-10 h-10 rounded-full object-cover border">
+                  <div>
+                    <div class="font-semibold text-slate-800">${u.name}</div>
+                    <div class="text-xs text-slate-500">Phone: ${u.phone || 'Not specified'}</div>
+                  </div>
                 </div>
                 <a href="tel:${u.phone}" class="bg-emerald-100 text-emerald-800 text-xs px-3 py-1.5 rounded-lg font-medium hover:bg-emerald-200">Call</a>
               </div>
@@ -372,6 +467,11 @@
 
         if (readyList.innerHTML === '') {
           readyList.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">No one on court. Click the button above to be first!</p>';
+        }
+
+        // Refresh active stats modal if open
+        if (selectedPlayerIdForStats) {
+          openPlayerStats(selectedPlayerIdForStats);
         }
       });
     }
@@ -400,14 +500,33 @@
     function openMatchModal() { document.getElementById('match-modal').classList.remove('hidden'); document.getElementById('match-modal').classList.add('flex'); }
     function closeMatchModal() { document.getElementById('match-modal').classList.add('hidden'); document.getElementById('match-modal').classList.remove('flex'); }
 
-    // Player Stats Modal
+    // Player Profile & Questionnaire Modal
     function openPlayerStats(playerId) {
+      selectedPlayerIdForStats = playerId;
       const player = allUsers.find(u => u.id === playerId);
       if (!player) return;
 
+      document.getElementById('stats-player-photo').src = player.photoURL || 'https://via.placeholder.com/80?text=Tennis';
       document.getElementById('stats-player-name').innerText = player.name;
       document.getElementById('stats-player-phone').innerText = player.phone ? `Tel: ${player.phone}` : player.email;
       document.getElementById('stats-player-elo').innerText = player.rating || 1500;
+
+      // Populate Questionnaire
+      document.getElementById('stats-ntrp').innerText = player.ntrp || 'N/A';
+      document.getElementById('stats-age').innerText = player.age || 'N/A';
+      document.getElementById('stats-hand').innerText = player.hand || 'N/A';
+      document.getElementById('stats-backhand').innerText = player.backhand || 'N/A';
+      document.getElementById('stats-racket').innerText = player.racket || 'N/A';
+      document.getElementById('stats-locations').innerText = player.locations || 'N/A';
+      document.getElementById('stats-times').innerText = player.times || 'N/A';
+
+      // Show Edit Profile button only if authorized user owns this profile
+      const editBtn = document.getElementById('edit-profile-btn');
+      if (currentUser && currentUser.uid === playerId) {
+        editBtn.classList.remove('hidden');
+      } else {
+        editBtn.classList.add('hidden');
+      }
 
       const playerMatches = allMatches.filter(m => m.player1Id === playerId || m.player2Id === playerId);
       
@@ -451,8 +570,55 @@
     }
 
     function closeStatsModal() {
+      selectedPlayerIdForStats = null;
       document.getElementById('stats-modal').classList.add('hidden');
       document.getElementById('stats-modal').classList.remove('flex');
+    }
+
+    // Edit Profile Questionnaire Modal
+    function openEditProfileModal() {
+      if (!currentUserData) return;
+      document.getElementById('edit-photoURL').value = currentUserData.photoURL || '';
+      document.getElementById('edit-age').value = currentUserData.age || '';
+      document.getElementById('edit-ntrp').value = currentUserData.ntrp || '';
+      document.getElementById('edit-hand').value = currentUserData.hand || '';
+      document.getElementById('edit-backhand').value = currentUserData.backhand || '';
+      document.getElementById('edit-racket').value = currentUserData.racket || '';
+      document.getElementById('edit-locations').value = currentUserData.locations || '';
+      document.getElementById('edit-times').value = currentUserData.times || '';
+
+      document.getElementById('edit-profile-modal').classList.remove('hidden');
+      document.getElementById('edit-profile-modal').classList.add('flex');
+    }
+
+    function closeEditProfileModal() {
+      document.getElementById('edit-profile-modal').classList.add('hidden');
+      document.getElementById('edit-profile-modal').classList.remove('flex');
+    }
+
+    async function saveProfileQuestionnaire(e) {
+      e.preventDefault();
+      if (!currentUser) return;
+
+      const updatedFields = {
+        photoURL: document.getElementById('edit-photoURL').value,
+        age: document.getElementById('edit-age').value,
+        ntrp: document.getElementById('edit-ntrp').value,
+        hand: document.getElementById('edit-hand').value,
+        backhand: document.getElementById('edit-backhand').value,
+        racket: document.getElementById('edit-racket').value,
+        locations: document.getElementById('edit-locations').value,
+        times: document.getElementById('edit-times').value
+      };
+
+      try {
+        await db.collection('users').doc(currentUser.uid).update(updatedFields);
+        currentUserData = { ...currentUserData, ...updatedFields };
+        closeEditProfileModal();
+        openPlayerStats(currentUser.uid);
+      } catch (err) {
+        alert("Error saving profile: " + err.message);
+      }
     }
 
     // Elo calculation

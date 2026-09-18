@@ -153,8 +153,13 @@
       
       <form id="edit-profile-form" onsubmit="saveProfileQuestionnaire(event)" class="space-y-3 text-xs">
         <div>
-          <label class="block font-medium text-slate-600 mb-1">Photo URL</label>
-          <input type="url" id="edit-photoURL" placeholder="https://example.com/photo.jpg" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+          <label class="block font-medium text-slate-600 mb-1">Full Name</label>
+          <input type="text" id="edit-name" required class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-600 mb-1">Player Photo (Upload from phone)</label>
+          <input type="file" id="edit-photoFile" accept="image/*" class="w-full border rounded-lg p-1.5 text-xs bg-white file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+          <input type="hidden" id="edit-photoURL">
         </div>
         <div class="grid grid-cols-2 gap-2">
           <div>
@@ -578,7 +583,9 @@
     // Edit Profile Questionnaire Modal
     function openEditProfileModal() {
       if (!currentUserData) return;
+      document.getElementById('edit-name').value = currentUserData.name || '';
       document.getElementById('edit-photoURL').value = currentUserData.photoURL || '';
+      document.getElementById('edit-photoFile').value = '';
       document.getElementById('edit-age').value = currentUserData.age || '';
       document.getElementById('edit-ntrp').value = currentUserData.ntrp || '';
       document.getElementById('edit-hand').value = currentUserData.hand || '';
@@ -600,8 +607,26 @@
       e.preventDefault();
       if (!currentUser) return;
 
+      const fileInput = document.getElementById('edit-photoFile');
+      let photoURL = document.getElementById('edit-photoURL').value;
+
+      if (fileInput.files && fileInput.files[0]) {
+        const file = fileInput.files[0];
+        try {
+          photoURL = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (uploadEvent) => resolve(uploadEvent.target.result);
+            reader.onerror = (error) => reject(error);
+            reader.readAsDataURL(file);
+          });
+        } catch (err) {
+          console.error("Error reading file:", err);
+        }
+      }
+
       const updatedFields = {
-        photoURL: document.getElementById('edit-photoURL').value,
+        name: document.getElementById('edit-name').value,
+        photoURL: photoURL,
         age: document.getElementById('edit-age').value,
         ntrp: document.getElementById('edit-ntrp').value,
         hand: document.getElementById('edit-hand').value,

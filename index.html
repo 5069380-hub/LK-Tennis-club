@@ -3,565 +3,322 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tennis Club — Ranking & Matches</title>
+  <title>Tennis Club Ranking & Matches</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-  <link rel="icon" type="image/png" href="IMG_20260917_160556.png">
-  <link rel="apple-touch-icon" href="IMG_20260917_160556.png">
-
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
+<body class="bg-gray-100 font-sans min-h-screen text-gray-800">
 
   <!-- Header -->
-  <header class="bg-indigo-600 text-white p-4 shadow-md sticky top-0 z-10">
-    <div class="max-w-4xl mx-auto flex justify-between items-center">
-      <h1 class="text-xl font-bold flex items-center gap-2">
-        <span>🎾</span> Tennis Club
-      </h1>
-      <div id="user-nav" class="flex items-center gap-3">
-        <!-- Filled via JS -->
+  <header class="bg-indigo-900 text-white p-4 shadow-md flex justify-between items-center">
+    <h1 class="text-xl font-bold tracking-wide">Tennis Club</h1>
+    <div id="authContainer">
+      <button id="loginBtn" onclick="toggleAuthModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-3 py-1.5 rounded-lg transition">
+        Sign In
+      </button>
+      <div id="userInfo" class="hidden flex items-center space-x-2">
+        <span id="userEmail" class="text-xs text-indigo-200"></span>
+        <button onclick="logout()" class="bg-red-600 hover:bg-red-700 text-white text-xs px-2.5 py-1 rounded transition">Logout</button>
       </div>
     </div>
   </header>
 
-  <!-- Tab Navigation -->
-  <nav class="bg-white border-b border-slate-200 sticky top-[60px] z-10">
-    <div class="max-w-4xl mx-auto flex justify-around">
-      <button onclick="switchTab('tab-players')" id="btn-tab-players" class="py-3 px-4 text-indigo-600 border-b-2 border-indigo-600 font-medium text-sm flex-1 text-center">Players</button>
-      <button onclick="switchTab('tab-ready')" id="btn-tab-ready" class="py-3 px-4 text-slate-500 border-b-2 border-transparent font-medium text-sm flex-1 text-center">Ready to Play</button>
-      <button onclick="switchTab('tab-matches')" id="btn-tab-matches" class="py-3 px-4 text-slate-500 border-b-2 border-transparent font-medium text-sm flex-1 text-center">Matches</button>
-    </div>
+  <!-- Navigation Tabs -->
+  <nav class="flex border-b bg-white shadow-sm">
+    <button onclick="switchTab('rankings')" id="tabRankings" class="flex-1 py-3 text-center font-medium text-indigo-600 border-b-2 border-indigo-600">Rankings</button>
+    <button onclick="switchTab('matches')" id="tabMatches" class="flex-1 py-3 text-center font-medium text-gray-500">Matches</button>
   </nav>
 
-  <!-- Main Content -->
-  <main class="max-w-4xl mx-auto p-4 flex-1 w-full">
+  <main class="max-w-xl mx-auto p-4 space-y-6">
 
-    <!-- Tab: All Players / Leaderboard -->
-    <section id="tab-players" class="space-y-4">
-      <div class="flex justify-between items-center">
-        <h2 class="text-lg font-bold text-slate-700">Player Leaderboard (Elo)</h2>
-        <span class="text-xs text-slate-500">Tap a player for details</span>
-      </div>
-      <div id="players-list" class="space-y-2">
-        <!-- Player List -->
+    <!-- Rankings Tab -->
+    <section id="rankingsSection">
+      <h2 class="text-lg font-semibold mb-3 flex items-center justify-between">
+        <span>Player Standings</span>
+      </h2>
+      <div id="playersList" class="space-y-2">
+        <!-- Players loaded dynamically -->
       </div>
     </section>
 
-    <!-- Tab: Ready to Play -->
-    <section id="tab-ready" class="space-y-4 hidden">
-      <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-4 flex justify-between items-center">
-        <div>
-          <h3 class="font-semibold text-emerald-900">Your Status</h3>
-          <p class="text-xs text-emerald-700">Let others know you are ready on court</p>
-        </div>
-        <button id="toggle-ready-btn" onclick="toggleReadyStatus()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
-          I'm ready to play!
-        </button>
-      </div>
-
-      <h2 class="text-lg font-bold text-slate-700 pt-2">Currently Ready to Play</h2>
-      <div id="ready-players-list" class="space-y-2">
-        <!-- Ready Players List -->
-      </div>
-    </section>
-
-    <!-- Tab: Matches -->
-    <section id="tab-matches" class="space-y-4 hidden">
+    <!-- Matches Tab -->
+    <section id="matchesSection" class="hidden space-y-4">
       <div class="flex justify-between items-center">
-        <h2 class="text-lg font-bold text-slate-700">Match History</h2>
-        <button onclick="openMatchModal()" id="add-match-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-3 py-1.5 rounded-lg font-medium hidden">
-          + Record Match
+        <h2 class="text-lg font-semibold">Recent Matches</h2>
+        <button onclick="openAddMatchModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm px-3 py-1.5 rounded-lg font-medium transition">
+          + Add Match
         </button>
       </div>
-      <div id="matches-list" class="space-y-3">
-        <!-- Matches List -->
+      <div id="matchesList" class="space-y-2">
+        <!-- Matches loaded dynamically -->
       </div>
     </section>
 
   </main>
 
-  <!-- Modal: Player Stats & Matches -->
-  <div id="stats-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-xl p-6 max-w-md w-full space-y-4 shadow-xl max-h-[90vh] overflow-y-auto">
-      <div class="flex justify-between items-start border-b pb-3">
-        <div>
-          <h3 id="stats-player-name" class="text-xl font-bold text-slate-800">Player Name</h3>
-          <p id="stats-player-phone" class="text-xs text-slate-500"></p>
-        </div>
-        <div class="text-right">
-          <span id="stats-player-elo" class="text-xl font-bold text-indigo-600">1500</span>
-          <span class="text-[10px] text-slate-400 block">Elo Rating</span>
-        </div>
-      </div>
-
-      <!-- Quick Summary -->
-      <div class="grid grid-cols-3 gap-2 text-center">
-        <div class="bg-slate-50 p-2 rounded-lg border">
-          <span id="stats-total" class="block font-bold text-slate-800">0</span>
-          <span class="text-[10px] text-slate-400 uppercase">Matches</span>
-        </div>
-        <div class="bg-emerald-50 p-2 rounded-lg border border-emerald-100">
-          <span id="stats-wins" class="block font-bold text-emerald-700">0</span>
-          <span class="text-[10px] text-emerald-600 uppercase">Wins</span>
-        </div>
-        <div class="bg-rose-50 p-2 rounded-lg border border-rose-100">
-          <span id="stats-losses" class="block font-bold text-rose-700">0</span>
-          <span class="text-[10px] text-rose-600 uppercase">Losses</span>
+  <!-- Player Profile Modal -->
+  <div id="profileModal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <button onclick="closeProfileModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+      
+      <div class="text-center mb-6">
+        <img id="profPhoto" src="https://via.placeholder.com/100?text=Tennis" alt="Player Photo" class="w-24 h-24 rounded-full mx-auto object-cover border-4 border-indigo-100 shadow-md mb-3">
+        <h3 id="profName" class="text-2xl font-bold text-gray-900"></h3>
+        <p id="profPhone" class="text-xs text-gray-500 mt-0.5"></p>
+        <div class="inline-block bg-indigo-50 px-3 py-1 rounded-full text-indigo-700 font-bold text-sm mt-2">
+          Elo Rating: <span id="profElo"></span>
         </div>
       </div>
 
-      <!-- Player's Matches -->
-      <div class="space-y-2 pt-2">
-        <h4 class="text-sm font-bold text-slate-700">Match History</h4>
-        <div id="stats-matches-list" class="space-y-2">
-          <!-- Filtered Matches -->
+      <!-- Stats Summary -->
+      <div class="grid grid-cols-3 gap-2 text-center mb-6">
+        <div class="bg-gray-50 p-2.5 rounded-xl">
+          <div id="profMatches" class="text-lg font-bold text-gray-800">0</div>
+          <div class="text-[10px] uppercase font-semibold text-gray-400">Matches</div>
+        </div>
+        <div class="bg-emerald-50 p-2.5 rounded-xl">
+          <div id="profWins" class="text-lg font-bold text-emerald-600">0</div>
+          <div class="text-[10px] uppercase font-semibold text-emerald-600">Wins</div>
+        </div>
+        <div class="bg-rose-50 p-2.5 rounded-xl">
+          <div id="profLosses" class="text-lg font-bold text-rose-600">0</div>
+          <div class="text-[10px] uppercase font-semibold text-rose-600">Losses</div>
         </div>
       </div>
 
-      <button onclick="closeStatsModal()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 rounded-lg text-xs font-semibold mt-2">Close</button>
+      <!-- Bio / Info Details -->
+      <div class="bg-gray-50 rounded-xl p-4 mb-6 text-sm space-y-2">
+        <h4 class="font-semibold text-gray-700 border-b pb-1 mb-2 text-xs uppercase tracking-wider">Player Info</h4>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div><span class="text-gray-400">NTRP Self-Rating:</span> <span id="profNtrp" class="font-medium">N/A</span></div>
+          <div><span class="text-gray-400">Age:</span> <span id="profAge" class="font-medium">N/A</span></div>
+          <div><span class="text-gray-400">Plays:</span> <span id="profHand" class="font-medium">N/A</span></div>
+          <div><span class="text-gray-400">Backhand:</span> <span id="profBackhand" class="font-medium">N/A</span></div>
+        </div>
+        <div class="text-xs pt-1"><span class="text-gray-400">Racket:</span> <span id="profRacket" class="font-medium">N/A</span></div>
+        <div class="text-xs"><span class="text-gray-400">Preferred Courts:</span> <span id="profLocations" class="font-medium">N/A</span></div>
+        <div class="text-xs"><span class="text-gray-400">Preferred Time:</span> <span id="profTimes" class="font-medium">N/A</span></div>
+      </div>
+
+      <!-- Action: Edit Profile (visible only to profile owner) -->
+      <button id="editProfileBtn" onclick="openEditProfileModal()" class="w-full mb-4 hidden bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-xl text-sm font-medium transition">
+        Edit Profile
+      </button>
+
+      <!-- Match History -->
+      <div>
+        <h4 class="font-semibold text-gray-800 mb-2 text-sm">Match History</h4>
+        <div id="profHistory" class="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Modal: Auth / Registration -->
-  <div id="auth-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-xl p-6 max-w-sm w-full space-y-4 shadow-xl">
-      <h3 id="auth-title" class="text-xl font-bold text-slate-800">Log In</h3>
+  <!-- Edit Profile Modal -->
+  <div id="editModal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <button onclick="closeEditModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+      <h3 class="text-lg font-bold text-gray-900 mb-4">Edit Profile</h3>
       
-      <form id="auth-form" onsubmit="handleAuth(event)" class="space-y-3">
-        <div id="name-group" class="hidden">
-          <label class="block text-xs font-medium text-slate-600 mb-1">Full Name</label>
-          <input type="text" id="auth-name" class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-        </div>
+      <form id="editProfileForm" onsubmit="saveProfile(event)" class="space-y-3 text-sm">
         <div>
-          <label class="block text-xs font-medium text-slate-600 mb-1">Email</label>
-          <input type="email" id="auth-email" required class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          <label class="block text-xs font-medium text-gray-600 mb-1">Photo URL</label>
+          <input type="url" id="editPhotoURL" placeholder="https://example.com/photo.jpg" class="w-full border rounded-lg p-2 text-xs">
         </div>
-        <div>
-          <label class="block text-xs font-medium text-slate-600 mb-1">Password</label>
-          <input type="password" id="auth-password" required class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-        </div>
-        <div id="phone-group" class="hidden">
-          <label class="block text-xs font-medium text-slate-600 mb-1">Phone Number</label>
-          <input type="tel" id="auth-phone" placeholder="+1..." class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-        </div>
-
-        <button type="submit" id="auth-submit-btn" class="w-full bg-indigo-600 text-white py-2 rounded-lg font-medium hover:bg-indigo-700 transition mt-2">
-          Log In
-        </button>
-      </form>
-
-      <div class="text-center text-xs text-slate-500 pt-2 border-t">
-        <span id="auth-toggle-text">Don't have an account?</span>
-        <button onclick="toggleAuthMode()" id="auth-toggle-btn" class="text-indigo-600 font-semibold underline ml-1">Sign Up</button>
-      </div>
-      <button onclick="closeAuthModal()" class="w-full text-center text-xs text-slate-400 mt-2">Cancel</button>
-    </div>
-  </div>
-
-  <!-- Modal: Record Match Result -->
-  <div id="match-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-xl p-6 max-w-md w-full space-y-4 shadow-xl">
-      <h3 class="text-xl font-bold text-slate-800">Record Match Result</h3>
-      
-      <form id="match-form" onsubmit="saveMatch(event)" class="space-y-3">
-        <div>
-          <label class="block text-xs font-medium text-slate-600 mb-1">Opponent</label>
-          <select id="match-opponent" required class="w-full border rounded-lg p-2 text-sm outline-none">
-            <!-- Opponent select list -->
-          </select>
-        </div>
-
-        <div class="space-y-2 pt-2">
-          <label class="block text-xs font-medium text-slate-600">Score by sets (You vs Opponent):</label>
-          <div class="grid grid-cols-3 gap-2">
-            <div>
-              <span class="text-xs text-slate-400 block text-center">Set 1</span>
-              <div class="flex gap-1">
-                <input type="number" id="s1-p1" min="0" max="7" placeholder="6" required class="w-full border text-center rounded p-1 text-sm">
-                <input type="number" id="s1-p2" min="0" max="7" placeholder="4" required class="w-full border text-center rounded p-1 text-sm">
-              </div>
-            </div>
-            <div>
-              <span class="text-xs text-slate-400 block text-center">Set 2</span>
-              <div class="flex gap-1">
-                <input type="number" id="s2-p1" min="0" max="7" placeholder="3" required class="w-full border text-center rounded p-1 text-sm">
-                <input type="number" id="s2-p2" min="0" max="7" placeholder="6" required class="w-full border text-center rounded p-1 text-sm">
-              </div>
-            </div>
-            <div>
-              <span class="text-xs text-slate-400 block text-center">Set 3 (optional)</span>
-              <div class="flex gap-1">
-                <input type="number" id="s3-p1" min="0" max="15" placeholder="10" class="w-full border text-center rounded p-1 text-sm">
-                <input type="number" id="s3-p2" min="0" max="15" placeholder="8" class="w-full border text-center rounded p-1 text-sm">
-              </div>
-            </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Age</label>
+            <input type="number" id="editAge" placeholder="e.g. 32" class="w-full border rounded-lg p-2 text-xs">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">NTRP Rating</label>
+            <select id="editNtrp" class="w-full border rounded-lg p-2 text-xs">
+              <option value="">Select NTRP</option>
+              <option value="2.5">2.5 (Beginner)</option>
+              <option value="3.0">3.0 (Intermediate)</option>
+              <option value="3.5">3.5 (Intermediate+)</option>
+              <option value="4.0">4.0 (Advanced)</option>
+              <option value="4.5">4.5 (Advanced+)</option>
+              <option value="5.0">5.0 (Expert)</option>
+            </select>
           </div>
         </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Handedness</label>
+            <select id="editHand" class="w-full border rounded-lg p-2 text-xs">
+              <option value="">Select Hand</option>
+              <option value="Right-handed">Right-handed</option>
+              <option value="Left-handed">Left-handed</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Backhand</label>
+            <select id="editBackhand" class="w-full border rounded-lg p-2 text-xs">
+              <option value="">Select Backhand</option>
+              <option value="Two-handed">Two-handed</option>
+              <option value="One-handed">One-handed</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Racket & Setup</label>
+          <input type="text" id="editRacket" placeholder="e.g. Wilson Blade 98" class="w-full border rounded-lg p-2 text-xs">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Preferred Locations / Courts</label>
+          <input type="text" id="editLocations" placeholder="e.g. Central Park Courts, West Side" class="w-full border rounded-lg p-2 text-xs">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Preferred Play Time</label>
+          <input type="text" id="editTimes" placeholder="e.g. Weekday evenings, Sunday morning" class="w-full border rounded-lg p-2 text-xs">
+        </div>
 
-        <button type="submit" class="w-full bg-emerald-600 text-white py-2 rounded-lg font-medium hover:bg-emerald-700 transition mt-4">
-          Save & Recalculate Elo
+        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 rounded-xl transition text-sm mt-4">
+          Save Changes
         </button>
       </form>
-      <button onclick="closeMatchModal()" class="w-full text-center text-xs text-slate-400">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Sign In / Auth Modal -->
+  <div id="authModal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-xs w-full p-6 shadow-2xl relative">
+      <button onclick="toggleAuthModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-lg font-bold">&times;</button>
+      <h3 id="authTitle" class="text-base font-bold text-gray-900 mb-3 text-center">Sign In</h3>
+      <form onsubmit="handleAuth(event)" class="space-y-3 text-xs">
+        <input type="email" id="authEmail" placeholder="Email" required class="w-full border rounded-lg p-2">
+        <input type="password" id="authPassword" placeholder="Password" required class="w-full border rounded-lg p-2">
+        <button type="submit" id="authSubmitBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg font-medium transition">
+          Sign In
+        </button>
+      </form>
+      <div class="text-center mt-3">
+        <button onclick="toggleAuthMode()" id="toggleAuthBtn" class="text-[11px] text-indigo-600 hover:underline">
+          Need an account? Sign Up
+        </button>
+      </div>
     </div>
   </div>
 
   <script>
-    // Firebase Config
+    // Firebase Config (Replace with your own project config if needed)
     const firebaseConfig = {
-      apiKey: "AIzaSyC93VsSVGfh14n2u3JShZ53-JJCqTiDvOs",
-      authDomain: "lk-tennis.firebaseapp.com",
-      projectId: "lk-tennis",
-      storageBucket: "lk-tennis.appspot.com",
-      messagingSenderId: "1028741300977",
-      appId: "1:1028741300977:web:96e8d254b1f69cbba62bbf"
+      apiKey: "AIzaSyDummyKeyForTemplate",
+      authDomain: "lk-tennis-club.firebaseapp.com",
+      projectId: "lk-tennis-club",
+      storageBucket: "lk-tennis-club.appspot.com",
+      messagingSenderId: "123456789",
+      appId: "1:123456789:web:abc123def456"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
     const db = firebase.firestore();
+    const auth = firebase.auth();
 
-    let currentUser = null;
-    let currentUserData = null;
-    let isRegisterMode = false;
-    let allUsers = [];
-    let allMatches = [];
+    let currentUserId = null;
+    let currentProfilePlayerId = null;
+    let isSignUpMode = false;
 
-    // Auth state tracking
-    auth.onAuthStateChanged(async (user) => {
-      currentUser = user;
+    // Track Auth State
+    auth.onAuthStateChanged(user => {
       if (user) {
-        const doc = await db.collection('users').doc(user.uid).get();
-        currentUserData = doc.data();
-        renderNavLoggedIn();
-        document.getElementById('add-match-btn').classList.remove('hidden');
+        currentUserId = user.uid;
+        document.getElementById('loginBtn').classList.add('hidden');
+        document.getElementById('userInfo').classList.remove('hidden');
+        document.getElementById('userEmail').textContent = user.email;
       } else {
-        currentUserData = null;
-        renderNavLoggedOut();
-        document.getElementById('add-match-btn').classList.add('hidden');
+        currentUserId = null;
+        document.getElementById('loginBtn').classList.remove('hidden');
+        document.getElementById('userInfo').classList.add('hidden');
       }
-      updateReadyButtonUI();
-      loadPlayers();
-      loadMatches();
     });
 
-    // Tab switching
-    function switchTab(tabId) {
-      ['tab-players', 'tab-ready', 'tab-matches'].forEach(id => {
-        document.getElementById(id).classList.add('hidden');
-        document.getElementById('btn-' + id).classList.remove('border-indigo-600', 'text-indigo-600');
-        document.getElementById('btn-' + id).classList.add('border-transparent', 'text-slate-500');
-      });
-      document.getElementById(tabId).classList.remove('hidden');
-      document.getElementById('btn-' + tabId).classList.add('border-indigo-600', 'text-indigo-600');
-      document.getElementById('btn-' + tabId).classList.remove('border-transparent', 'text-slate-500');
+    function toggleAuthModal() {
+      document.getElementById('authModal').classList.toggle('hidden');
     }
-
-    // Render Nav
-    function renderNavLoggedIn() {
-      document.getElementById('user-nav').innerHTML = `
-        <span class="text-xs font-medium bg-indigo-700 px-2 py-1 rounded-md">${currentUserData?.name || 'Player'} (${currentUserData?.rating || 1500})</span>
-        <button onclick="auth.signOut()" class="text-xs bg-indigo-800 hover:bg-indigo-900 px-2 py-1 rounded-md">Log Out</button>
-      `;
-    }
-
-    function renderNavLoggedOut() {
-      document.getElementById('user-nav').innerHTML = `
-        <button onclick="openAuthModal()" class="text-xs bg-white text-indigo-600 font-semibold px-3 py-1.5 rounded-md shadow hover:bg-slate-50">Log In</button>
-      `;
-    }
-
-    function openAuthModal() { document.getElementById('auth-modal').classList.remove('hidden'); document.getElementById('auth-modal').classList.add('flex'); }
-    function closeAuthModal() { document.getElementById('auth-modal').classList.add('hidden'); document.getElementById('auth-modal').classList.remove('flex'); }
 
     function toggleAuthMode() {
-      isRegisterMode = !isRegisterMode;
-      document.getElementById('auth-title').innerText = isRegisterMode ? 'Sign Up' : 'Log In';
-      document.getElementById('auth-submit-btn').innerText = isRegisterMode ? 'Sign Up' : 'Log In';
-      document.getElementById('name-group').classList.toggle('hidden', !isRegisterMode);
-      document.getElementById('phone-group').classList.toggle('hidden', !isRegisterMode);
-      document.getElementById('auth-toggle-text').innerText = isRegisterMode ? 'Already have an account?' : "Don't have an account?";
-      document.getElementById('auth-toggle-btn').innerText = isRegisterMode ? 'Log In' : 'Sign Up';
+      isSignUpMode = !isSignUpMode;
+      document.getElementById('authTitle').textContent = isSignUpMode ? 'Sign Up' : 'Sign In';
+      document.getElementById('authSubmitBtn').textContent = isSignUpMode ? 'Sign Up' : 'Sign In';
+      document.getElementById('toggleAuthBtn').textContent = isSignUpMode ? 'Already have an account? Sign In' : 'Need an account? Sign Up';
     }
 
     async function handleAuth(e) {
       e.preventDefault();
-      const email = document.getElementById('auth-email').value;
-      const password = document.getElementById('auth-password').value;
+      const email = document.getElementById('authEmail').value;
+      const pass = document.getElementById('authPassword').value;
+      try {
+        if (isSignUpMode) {
+          await auth.createUserWithEmailAndPassword(email, pass);
+        } else {
+          await auth.signInWithEmailAndPassword(email, pass);
+        }
+        toggleAuthModal();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    function logout() {
+      auth.signOut();
+    }
+
+    // Modal Helpers
+    function closeProfileModal() { document.getElementById('profileModal').classList.add('hidden'); }
+    function closeEditModal() { document.getElementById('editModal').classList.add('hidden'); }
+    function openEditProfileModal() { document.getElementById('editModal').classList.remove('hidden'); }
+
+    // Save Edit Profile Form
+    async function saveProfile(e) {
+      e.preventDefault();
+      if (!currentProfilePlayerId) return;
+
+      const updatedData = {
+        photoURL: document.getElementById('editPhotoURL').value || '',
+        age: document.getElementById('editAge').value || '',
+        selfRating: document.getElementById('editNtrp').value || '',
+        hand: document.getElementById('editHand').value || '',
+        backhand: document.getElementById('editBackhand').value || '',
+        racket: document.getElementById('editRacket').value || '',
+        locations: document.getElementById('editLocations').value || '',
+        times: document.getElementById('editTimes').value || ''
+      };
 
       try {
-        if (isRegisterMode) {
-          const name = document.getElementById('auth-name').value;
-          const phone = document.getElementById('auth-phone').value;
-          const res = await auth.createUserWithEmailAndPassword(email, password);
-          await db.collection('users').doc(res.user.uid).set({
-            name: name,
-            phone: phone,
-            email: email,
-            rating: 1500,
-            isReady: false,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-        } else {
-          await auth.signInWithEmailAndPassword(email, password);
-        }
-        closeAuthModal();
+        await db.collection('players').doc(currentProfilePlayerId).update(updatedData);
+        closeEditModal();
+        alert('Profile updated successfully!');
       } catch (err) {
-        alert("Error: " + err.message);
+        console.error(err);
+        alert('Failed to update profile.');
       }
     }
 
-    // Load players
-    function loadPlayers() {
-      db.collection('users').orderBy('rating', 'desc').onSnapshot(snapshot => {
-        allUsers = [];
-        const playersList = document.getElementById('players-list');
-        const readyList = document.getElementById('ready-players-list');
-        const selectOpponent = document.getElementById('match-opponent');
+    function switchTab(tab) {
+      const rankings = document.getElementById('rankingsSection');
+      const matches = document.getElementById('matchesSection');
+      const tabR = document.getElementById('tabRankings');
+      const tabM = document.getElementById('tabMatches');
 
-        playersList.innerHTML = '';
-        readyList.innerHTML = '';
-        selectOpponent.innerHTML = '<option value="">Select opponent...</option>';
-
-        let rank = 1;
-        snapshot.forEach(doc => {
-          const u = { id: doc.id, ...doc.data() };
-          allUsers.push(u);
-
-          // All players list (Leaderboard) - Clickable for stats
-          playersList.innerHTML += `
-            <div onclick="openPlayerStats('${u.id}')" class="bg-white p-3 rounded-lg border border-slate-200 flex justify-between items-center shadow-sm cursor-pointer hover:border-indigo-300 transition">
-              <div class="flex items-center gap-3">
-                <span class="font-bold text-slate-400 w-5 text-center">${rank++}</span>
-                <div>
-                  <div class="font-semibold text-slate-800 flex items-center gap-1.5">
-                    ${u.name}
-                    ${u.isReady ? '<span class="w-2 h-2 rounded-full bg-emerald-500" title="Ready to play"></span>' : ''}
-                  </div>
-                  <div class="text-xs text-slate-500">${u.phone || u.email}</div>
-                </div>
-              </div>
-              <div class="text-right">
-                <span class="font-bold text-indigo-600 text-lg">${u.rating || 1500}</span>
-                <span class="text-[10px] text-slate-400 block">Elo</span>
-              </div>
-            </div>
-          `;
-
-          // Ready to Play list
-          if (u.isReady) {
-            readyList.innerHTML += `
-              <div class="bg-white p-3 rounded-lg border border-emerald-200 flex justify-between items-center shadow-sm">
-                <div>
-                  <div class="font-semibold text-slate-800">${u.name}</div>
-                  <div class="text-xs text-slate-500">Phone: ${u.phone || 'Not specified'}</div>
-                </div>
-                <a href="tel:${u.phone}" class="bg-emerald-100 text-emerald-800 text-xs px-3 py-1.5 rounded-lg font-medium hover:bg-emerald-200">Call</a>
-              </div>
-            `;
-          }
-
-          // Opponent select
-          if (currentUser && u.id !== currentUser.uid) {
-            selectOpponent.innerHTML += `<option value="${u.id}">${u.name} (${u.rating || 1500})</option>`;
-          }
-        });
-
-        if (readyList.innerHTML === '') {
-          readyList.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">No one on court. Click the button above to be first!</p>';
-        }
-      });
-    }
-
-    // Toggle Ready status
-    async function toggleReadyStatus() {
-      if (!currentUser) return openAuthModal();
-      const newStatus = !currentUserData?.isReady;
-      await db.collection('users').doc(currentUser.uid).update({ isReady: newStatus });
-      currentUserData.isReady = newStatus;
-      updateReadyButtonUI();
-    }
-
-    function updateReadyButtonUI() {
-      const btn = document.getElementById('toggle-ready-btn');
-      if (currentUserData?.isReady) {
-        btn.innerText = "I'm done / Busy";
-        btn.className = 'bg-slate-500 hover:bg-slate-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition';
+      if (tab === 'rankings') {
+        rankings.classList.remove('hidden');
+        matches.classList.add('hidden');
+        tabR.className = "flex-1 py-3 text-center font-medium text-indigo-600 border-b-2 border-indigo-600";
+        tabM.className = "flex-1 py-3 text-center font-medium text-gray-500";
       } else {
-        btn.innerText = "I'm ready to play!";
-        btn.className = 'bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition';
+        rankings.classList.add('hidden');
+        matches.classList.remove('hidden');
+        tabM.className = "flex-1 py-3 text-center font-medium text-indigo-600 border-b-2 border-indigo-600";
+        tabR.className = "flex-1 py-3 text-center font-medium text-gray-500";
       }
-    }
-
-    // Match modal
-    function openMatchModal() { document.getElementById('match-modal').classList.remove('hidden'); document.getElementById('match-modal').classList.add('flex'); }
-    function closeMatchModal() { document.getElementById('match-modal').classList.add('hidden'); document.getElementById('match-modal').classList.remove('flex'); }
-
-    // Player Stats Modal
-    function openPlayerStats(playerId) {
-      const player = allUsers.find(u => u.id === playerId);
-      if (!player) return;
-
-      document.getElementById('stats-player-name').innerText = player.name;
-      document.getElementById('stats-player-phone').innerText = player.phone ? `Tel: ${player.phone}` : player.email;
-      document.getElementById('stats-player-elo').innerText = player.rating || 1500;
-
-      const playerMatches = allMatches.filter(m => m.player1Id === playerId || m.player2Id === playerId);
-      
-      let wins = 0;
-      let losses = 0;
-      let matchesHtml = '';
-
-      playerMatches.forEach(m => {
-        const isPlayer1 = m.player1Id === playerId;
-        const diff = isPlayer1 ? m.diffP1 : m.diffP2;
-        const isWin = diff > 0;
-        
-        if (isWin) wins++;
-        else if (diff < 0) losses++;
-
-        const p1DiffStr = m.diffP1 >= 0 ? `+${m.diffP1}` : m.diffP1;
-        const p2DiffStr = m.diffP2 >= 0 ? `+${m.diffP2}` : m.diffP2;
-
-        matchesHtml += `
-          <div class="bg-slate-50 p-2 rounded-lg border text-xs">
-            <div class="flex justify-between font-medium text-slate-700 mb-1">
-              <span>${m.player1Name} <span class="${m.diffP1 >= 0 ? 'text-emerald-600' : 'text-rose-500'}">(${p1DiffStr})</span></span>
-              <span class="text-slate-400">vs</span>
-              <span>${m.player2Name} <span class="${m.diffP2 >= 0 ? 'text-emerald-600' : 'text-rose-500'}">(${p2DiffStr})</span></span>
-            </div>
-            <div class="text-center font-mono font-bold text-indigo-600">
-              ${m.scoreStr}
-            </div>
-          </div>
-        `;
-      });
-
-      document.getElementById('stats-total').innerText = playerMatches.length;
-      document.getElementById('stats-wins').innerText = wins;
-      document.getElementById('stats-losses').innerText = losses;
-      
-      document.getElementById('stats-matches-list').innerHTML = matchesHtml || '<p class="text-xs text-slate-400 text-center py-2">No matches played yet.</p>';
-
-      document.getElementById('stats-modal').classList.remove('hidden');
-      document.getElementById('stats-modal').classList.add('flex');
-    }
-
-    function closeStatsModal() {
-      document.getElementById('stats-modal').classList.add('hidden');
-      document.getElementById('stats-modal').classList.remove('flex');
-    }
-
-    // Elo calculation
-    function calculateSetElo(ratingA, ratingB, setsA, setsB) {
-      const K = 32;
-      let totalChangeA = 0;
-      let totalChangeB = 0;
-
-      for (let i = 0; i < setsA.length; i++) {
-        const scoreA = setsA[i];
-        const scoreB = setsB[i];
-
-        let actualA = 0.5;
-        if (scoreA > scoreB) actualA = 1;
-        else if (scoreB > scoreA) actualA = 0;
-
-        const expectedA = 1 / (1 + Math.pow(10, (ratingB - ratingA) / 400));
-        const change = K * (actualA - expectedA);
-
-        totalChangeA += change;
-        totalChangeB -= change;
-      }
-
-      return {
-        newRatingA: Math.round(ratingA + totalChangeA),
-        newRatingB: Math.round(ratingB + totalChangeB),
-        diffA: Math.round(totalChangeA),
-        diffB: Math.round(totalChangeB)
-      };
-    }
-
-    async function saveMatch(e) {
-      e.preventDefault();
-      const oppId = document.getElementById('match-opponent').value;
-      if (!oppId) return alert('Select an opponent');
-
-      const opponent = allUsers.find(u => u.id === oppId);
-
-      const s1A = parseInt(document.getElementById('s1-p1').value);
-      const s1B = parseInt(document.getElementById('s1-p2').value);
-      const s2A = parseInt(document.getElementById('s2-p1').value);
-      const s2B = parseInt(document.getElementById('s2-p2').value);
-      const s3A = document.getElementById('s3-p1').value ? parseInt(document.getElementById('s3-p1').value) : null;
-      const s3B = document.getElementById('s3-p2').value ? parseInt(document.getElementById('s3-p2').value) : null;
-
-      const setsA = [s1A, s2A];
-      const setsB = [s1B, s2B];
-      if (s3A !== null && s3B !== null) {
-        setsA.push(s3A);
-        setsB.push(s3B);
-      }
-
-      const scoreStr = `${s1A}:${s1B}, ${s2A}:${s2B}` + (s3A !== null ? `, ${s3A}:${s3B}` : '');
-      const eloResult = calculateSetElo(currentUserData.rating || 1500, opponent.rating || 1500, setsA, setsB);
-
-      await db.collection('matches').add({
-        player1Id: currentUser.uid,
-        player1Name: currentUserData.name,
-        player2Id: opponent.id,
-        player2Name: opponent.name,
-        scoreStr: scoreStr,
-        diffP1: eloResult.diffA,
-        diffP2: eloResult.diffB,
-        date: firebase.firestore.FieldValue.serverTimestamp()
-      });
-
-      await db.collection('users').doc(currentUser.uid).update({ rating: eloResult.newRatingA });
-      await db.collection('users').doc(opponent.id).update({ rating: eloResult.newRatingB });
-
-      closeMatchModal();
-      document.getElementById('match-form').reset();
-    }
-
-    function loadMatches() {
-      db.collection('matches').orderBy('date', 'desc').limit(50).onSnapshot(snapshot => {
-        allMatches = [];
-        const matchesList = document.getElementById('matches-list');
-        matchesList.innerHTML = '';
-
-        if (snapshot.empty) {
-          matchesList.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">No matches recorded yet.</p>';
-          return;
-        }
-
-        snapshot.forEach(doc => {
-          const m = doc.data();
-          allMatches.push(m);
-          
-          const p1Diff = m.diffP1 >= 0 ? `+${m.diffP1}` : m.diffP1;
-          const p2Diff = m.diffP2 >= 0 ? `+${m.diffP2}` : m.diffP2;
-
-          matchesList.innerHTML += `
-            <div class="bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
-              <div class="flex justify-between items-center text-sm font-semibold text-slate-800 mb-1">
-                <div>
-                  ${m.player1Name} <span class="text-xs ${m.diffP1 >= 0 ? 'text-emerald-600' : 'text-rose-500'}">(${p1Diff})</span>
-                </div>
-                <span class="text-xs text-slate-400">vs</span>
-                <div>
-                  ${m.player2Name} <span class="text-xs ${m.diffP2 >= 0 ? 'text-emerald-600' : 'text-rose-500'}">(${p2Diff})</span>
-                </div>
-              </div>
-              <div class="text-center font-mono font-bold text-indigo-600 text-sm bg-slate-50 py-1 rounded">
-                ${m.scoreStr}
-              </div>
-            </div>
-          `;
-        });
-      });
     }
   </script>
 </body>

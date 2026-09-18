@@ -36,7 +36,7 @@
   </nav>
 
   <!-- Main Content -->
-  <main class="max-w-4xl mx-auto p-4 flex-1 w-full">
+  <main class="max-w-4xl mx-auto p-4 flex-1 w-full pb-20">
 
     <!-- Tab: All Players / Leaderboard -->
     <section id="tab-players" class="space-y-4">
@@ -121,6 +121,8 @@
         <div class="grid grid-cols-2 gap-2">
           <div><span class="text-slate-400">NTRP Rating:</span> <span id="stats-ntrp" class="font-medium text-slate-800">N/A</span></div>
           <div><span class="text-slate-400">Age:</span> <span id="stats-age" class="font-medium text-slate-800">N/A</span></div>
+          <div><span class="text-slate-400">Height:</span> <span id="stats-height" class="font-medium text-slate-800">N/A</span></div>
+          <div><span class="text-slate-400">Weight:</span> <span id="stats-weight" class="font-medium text-slate-800">N/A</span></div>
           <div><span class="text-slate-400">Hand:</span> <span id="stats-hand" class="font-medium text-slate-800">N/A</span></div>
           <div><span class="text-slate-400">Backhand:</span> <span id="stats-backhand" class="font-medium text-slate-800">N/A</span></div>
         </div>
@@ -148,10 +150,20 @@
 
   <!-- Modal: Edit Profile / Questionnaire -->
   <div id="edit-profile-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-xl p-6 max-w-md w-full space-y-4 shadow-xl max-h-[90vh] overflow-y-auto">
-      <h3 class="text-lg font-bold text-slate-800">Edit Questionnaire</h3>
+    <div class="bg-white rounded-xl p-6 max-w-md w-full space-y-4 shadow-xl max-h-[90vh] overflow-y-auto relative">
       
-      <form id="edit-profile-form" onsubmit="saveProfileQuestionnaire(event)" class="space-y-3 text-xs">
+      <!-- Top header with Save button -->
+      <div class="flex justify-between items-center border-b pb-3 sticky top-0 bg-white z-10">
+        <h3 class="text-lg font-bold text-slate-800">Edit Questionnaire</h3>
+        <div class="flex items-center gap-3">
+          <button type="submit" form="edit-profile-form" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 py-1.5 rounded-lg transition shadow-sm">
+            Save
+          </button>
+          <button onclick="closeEditProfileModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold px-1">&times;</button>
+        </div>
+      </div>
+      
+      <form id="edit-profile-form" onsubmit="saveProfileQuestionnaire(event)" class="space-y-3 text-xs pb-10">
         <div>
           <label class="block font-medium text-slate-600 mb-1">Full Name</label>
           <input type="text" id="edit-name" required class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
@@ -181,6 +193,16 @@
         </div>
         <div class="grid grid-cols-2 gap-2">
           <div>
+            <label class="block font-medium text-slate-600 mb-1">Height</label>
+            <input type="text" id="edit-height" placeholder="e.g. 180 cm" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+          <div>
+            <label class="block font-medium text-slate-600 mb-1">Weight</label>
+            <input type="text" id="edit-weight" placeholder="e.g. 75 kg" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
             <label class="block font-medium text-slate-600 mb-1">Handedness</label>
             <select id="edit-hand" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
               <option value="">Select Hand</option>
@@ -199,22 +221,17 @@
         </div>
         <div>
           <label class="block font-medium text-slate-600 mb-1">Racket & Setup</label>
-          <input type="text" id="edit-racket" placeholder="e.g. Wilson Blade 98 v8" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+          <input type="text" id="edit-racket" placeholder="e.g. Wilson Blade 98" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
         <div>
           <label class="block font-medium text-slate-600 mb-1">Preferred Locations / Courts</label>
-          <input type="text" id="edit-locations" placeholder="e.g. Central Park Courts, West Side" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+          <input type="text" id="edit-locations" placeholder="e.g. Central Park" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
         <div>
           <label class="block font-medium text-slate-600 mb-1">Preferred Play Time</label>
-          <input type="text" id="edit-times" placeholder="e.g. Weekday evenings, Sunday morning" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+          <input type="text" id="edit-times" placeholder="e.g. Evenings" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
-
-        <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded-lg font-medium hover:bg-indigo-700 transition mt-2">
-          Save Questionnaire
-        </button>
       </form>
-      <button onclick="closeEditProfileModal()" class="w-full text-center text-xs text-slate-400 mt-2">Cancel</button>
     </div>
   </div>
 
@@ -254,12 +271,14 @@
     </div>
   </div>
 
-  <!-- Modal: Record Match Result -->
+  <!-- Modal: Record / Edit Match Result -->
   <div id="match-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-xl p-6 max-w-md w-full space-y-4 shadow-xl">
-      <h3 class="text-xl font-bold text-slate-800">Record Match Result</h3>
+    <div class="bg-white rounded-xl p-6 max-w-md w-full space-y-4 shadow-xl max-h-[90vh] overflow-y-auto relative">
+      <button onclick="closeMatchModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+      <h3 id="match-modal-title" class="text-xl font-bold text-slate-800">Record Match Result</h3>
       
-      <form id="match-form" onsubmit="saveMatch(event)" class="space-y-3">
+      <form id="match-form" onsubmit="saveMatch(event)" class="space-y-3 pb-6">
+        <input type="hidden" id="edit-match-id">
         <div>
           <label class="block text-xs font-medium text-slate-600 mb-1">Opponent</label>
           <select id="match-opponent" required class="w-full border rounded-lg p-2 text-sm outline-none">
@@ -294,11 +313,10 @@
           </div>
         </div>
 
-        <button type="submit" class="w-full bg-emerald-600 text-white py-2 rounded-lg font-medium hover:bg-emerald-700 transition mt-4">
-          Save & Recalculate Elo
+        <button type="submit" id="save-match-btn" class="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 transition mt-4 shadow-md text-sm">
+          Save Match Result
         </button>
       </form>
-      <button onclick="closeMatchModal()" class="w-full text-center text-xs text-slate-400">Cancel</button>
     </div>
   </div>
 
@@ -502,8 +520,50 @@
     }
 
     // Match modal
-    function openMatchModal() { document.getElementById('match-modal').classList.remove('hidden'); document.getElementById('match-modal').classList.add('flex'); }
-    function closeMatchModal() { document.getElementById('match-modal').classList.add('hidden'); document.getElementById('match-modal').classList.remove('flex'); }
+    function openMatchModal() {
+      document.getElementById('match-modal-title').innerText = 'Record Match Result';
+      document.getElementById('edit-match-id').value = '';
+      document.getElementById('match-form').reset();
+      document.getElementById('match-modal').classList.remove('hidden');
+      document.getElementById('match-modal').classList.add('flex');
+    }
+
+    function openEditMatchModal(matchId) {
+      const match = allMatches.find(m => m.id === matchId);
+      if (!match) return;
+
+      document.getElementById('match-modal-title').innerText = 'Edit Match Result';
+      document.getElementById('edit-match-id').value = match.id;
+      document.getElementById('match-opponent').value = match.player2Id;
+
+      const sets = match.scoreStr.split(', ');
+      if (sets[0]) {
+        const s1 = sets[0].split(':');
+        document.getElementById('s1-p1').value = s1[0] || '';
+        document.getElementById('s1-p2').value = s1[1] || '';
+      }
+      if (sets[1]) {
+        const s2 = sets[1].split(':');
+        document.getElementById('s2-p1').value = s2[0] || '';
+        document.getElementById('s2-p2').value = s2[1] || '';
+      }
+      if (sets[2]) {
+        const s3 = sets[2].split(':');
+        document.getElementById('s3-p1').value = s3[0] || '';
+        document.getElementById('s3-p2').value = s3[1] || '';
+      } else {
+        document.getElementById('s3-p1').value = '';
+        document.getElementById('s3-p2').value = '';
+      }
+
+      document.getElementById('match-modal').classList.remove('hidden');
+      document.getElementById('match-modal').classList.add('flex');
+    }
+
+    function closeMatchModal() { 
+      document.getElementById('match-modal').classList.add('hidden'); 
+      document.getElementById('match-modal').classList.remove('flex'); 
+    }
 
     // Player Profile & Questionnaire Modal
     function openPlayerStats(playerId) {
@@ -519,13 +579,14 @@
       // Populate Questionnaire
       document.getElementById('stats-ntrp').innerText = player.ntrp || 'N/A';
       document.getElementById('stats-age').innerText = player.age || 'N/A';
+      document.getElementById('stats-height').innerText = player.height || 'N/A';
+      document.getElementById('stats-weight').innerText = player.weight || 'N/A';
       document.getElementById('stats-hand').innerText = player.hand || 'N/A';
       document.getElementById('stats-backhand').innerText = player.backhand || 'N/A';
       document.getElementById('stats-racket').innerText = player.racket || 'N/A';
       document.getElementById('stats-locations').innerText = player.locations || 'N/A';
       document.getElementById('stats-times').innerText = player.times || 'N/A';
 
-      // Show Edit Profile button only if authorized user owns this profile
       const editBtn = document.getElementById('edit-profile-btn');
       if (currentUser && currentUser.uid === playerId) {
         editBtn.classList.remove('hidden');
@@ -549,16 +610,18 @@
 
         const p1DiffStr = m.diffP1 >= 0 ? `+${m.diffP1}` : m.diffP1;
         const p2DiffStr = m.diffP2 >= 0 ? `+${m.diffP2}` : m.diffP2;
+        const canEditMatch = currentUser && (m.player1Id === currentUser.uid || m.player2Id === currentUser.uid);
 
         matchesHtml += `
-          <div class="bg-slate-50 p-2 rounded-lg border text-xs">
+          <div class="bg-slate-50 p-2 rounded-lg border text-xs relative">
             <div class="flex justify-between font-medium text-slate-700 mb-1">
               <span>${m.player1Name} <span class="${m.diffP1 >= 0 ? 'text-emerald-600' : 'text-rose-500'}">(${p1DiffStr})</span></span>
               <span class="text-slate-400">vs</span>
               <span>${m.player2Name} <span class="${m.diffP2 >= 0 ? 'text-emerald-600' : 'text-rose-500'}">(${p2DiffStr})</span></span>
             </div>
-            <div class="text-center font-mono font-bold text-indigo-600">
-              ${m.scoreStr}
+            <div class="flex justify-between items-center">
+              <span class="font-mono font-bold text-indigo-600">${m.scoreStr}</span>
+              ${canEditMatch ? `<button onclick="openEditMatchModal('${m.id}')" class="text-[10px] bg-slate-200 hover:bg-slate-300 text-slate-700 px-2 py-0.5 rounded">Edit</button>` : ''}
             </div>
           </div>
         `;
@@ -587,6 +650,8 @@
       document.getElementById('edit-photoURL').value = currentUserData.photoURL || '';
       document.getElementById('edit-photoFile').value = '';
       document.getElementById('edit-age').value = currentUserData.age || '';
+      document.getElementById('edit-height').value = currentUserData.height || '';
+      document.getElementById('edit-weight').value = currentUserData.weight || '';
       document.getElementById('edit-ntrp').value = currentUserData.ntrp || '';
       document.getElementById('edit-hand').value = currentUserData.hand || '';
       document.getElementById('edit-backhand').value = currentUserData.backhand || '';
@@ -610,33 +675,31 @@
       const fileInput = document.getElementById('edit-photoFile');
       let photoURL = document.getElementById('edit-photoURL').value;
 
-      if (fileInput.files && fileInput.files[0]) {
-        const file = fileInput.files[0];
-        try {
+      try {
+        if (fileInput.files && fileInput.files[0]) {
+          const file = fileInput.files[0];
           photoURL = await new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = (uploadEvent) => resolve(uploadEvent.target.result);
             reader.onerror = (error) => reject(error);
             reader.readAsDataURL(file);
           });
-        } catch (err) {
-          console.error("Error reading file:", err);
         }
-      }
 
-      const updatedFields = {
-        name: document.getElementById('edit-name').value,
-        photoURL: photoURL,
-        age: document.getElementById('edit-age').value,
-        ntrp: document.getElementById('edit-ntrp').value,
-        hand: document.getElementById('edit-hand').value,
-        backhand: document.getElementById('edit-backhand').value,
-        racket: document.getElementById('edit-racket').value,
-        locations: document.getElementById('edit-locations').value,
-        times: document.getElementById('edit-times').value
-      };
+        const updatedFields = {
+          name: document.getElementById('edit-name').value,
+          photoURL: photoURL,
+          age: document.getElementById('edit-age').value,
+          height: document.getElementById('edit-height').value,
+          weight: document.getElementById('edit-weight').value,
+          ntrp: document.getElementById('edit-ntrp').value,
+          hand: document.getElementById('edit-hand').value,
+          backhand: document.getElementById('edit-backhand').value,
+          racket: document.getElementById('edit-racket').value,
+          locations: document.getElementById('edit-locations').value,
+          times: document.getElementById('edit-times').value
+        };
 
-      try {
         await db.collection('users').doc(currentUser.uid).update(updatedFields);
         currentUserData = { ...currentUserData, ...updatedFields };
         closeEditProfileModal();
@@ -677,6 +740,7 @@
 
     async function saveMatch(e) {
       e.preventDefault();
+      const matchId = document.getElementById('edit-match-id').value;
       const oppId = document.getElementById('match-opponent').value;
       if (!oppId) return alert('Select an opponent');
 
@@ -697,24 +761,54 @@
       }
 
       const scoreStr = `${s1A}:${s1B}, ${s2A}:${s2B}` + (s3A !== null ? `, ${s3A}:${s3B}` : '');
-      const eloResult = calculateSetElo(currentUserData.rating || 1500, opponent.rating || 1500, setsA, setsB);
 
-      await db.collection('matches').add({
-        player1Id: currentUser.uid,
-        player1Name: currentUserData.name,
-        player2Id: opponent.id,
-        player2Name: opponent.name,
-        scoreStr: scoreStr,
-        diffP1: eloResult.diffA,
-        diffP2: eloResult.diffB,
-        date: firebase.firestore.FieldValue.serverTimestamp()
-      });
+      try {
+        if (matchId) {
+          const oldMatchDoc = await db.collection('matches').doc(matchId).get();
+          if (oldMatchDoc.exists) {
+            const oldMatch = oldMatchDoc.data();
+            const p1Doc = await db.collection('users').doc(oldMatch.player1Id).get();
+            const p2Doc = await db.collection('users').doc(oldMatch.player2Id).get();
+            
+            let p1Rating = (p1Doc.data().rating || 1500) - oldMatch.diffP1;
+            let p2Rating = (p2Doc.data().rating || 1500) - oldMatch.diffP2;
 
-      await db.collection('users').doc(currentUser.uid).update({ rating: eloResult.newRatingA });
-      await db.collection('users').doc(opponent.id).update({ rating: eloResult.newRatingB });
+            const eloResult = calculateSetElo(p1Rating, p2Rating, setsA, setsB);
 
-      closeMatchModal();
-      document.getElementById('match-form').reset();
+            await db.collection('matches').doc(matchId).update({
+              player2Id: opponent.id,
+              player2Name: opponent.name,
+              scoreStr: scoreStr,
+              diffP1: eloResult.diffA,
+              diffP2: eloResult.diffB
+            });
+
+            await db.collection('users').doc(oldMatch.player1Id).update({ rating: p1Rating + eloResult.diffA });
+            await db.collection('users').doc(opponent.id).update({ rating: p2Rating + eloResult.diffB });
+          }
+        } else {
+          const eloResult = calculateSetElo(currentUserData.rating || 1500, opponent.rating || 1500, setsA, setsB);
+
+          await db.collection('matches').add({
+            player1Id: currentUser.uid,
+            player1Name: currentUserData.name,
+            player2Id: opponent.id,
+            player2Name: opponent.name,
+            scoreStr: scoreStr,
+            diffP1: eloResult.diffA,
+            diffP2: eloResult.diffB,
+            date: firebase.firestore.FieldValue.serverTimestamp()
+          });
+
+          await db.collection('users').doc(currentUser.uid).update({ rating: eloResult.newRatingA });
+          await db.collection('users').doc(opponent.id).update({ rating: eloResult.newRatingB });
+        }
+
+        closeMatchModal();
+        document.getElementById('match-form').reset();
+      } catch (err) {
+        alert("Error saving match: " + err.message);
+      }
     }
 
     function loadMatches() {
@@ -729,14 +823,15 @@
         }
 
         snapshot.forEach(doc => {
-          const m = doc.data();
+          const m = { id: doc.id, ...doc.data() };
           allMatches.push(m);
           
           const p1Diff = m.diffP1 >= 0 ? `+${m.diffP1}` : m.diffP1;
           const p2Diff = m.diffP2 >= 0 ? `+${m.diffP2}` : m.diffP2;
+          const canEditMatch = currentUser && (m.player1Id === currentUser.uid || m.player2Id === currentUser.uid);
 
           matchesList.innerHTML += `
-            <div class="bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+            <div class="bg-white p-3 rounded-lg border border-slate-200 shadow-sm relative">
               <div class="flex justify-between items-center text-sm font-semibold text-slate-800 mb-1">
                 <div>
                   ${m.player1Name} <span class="text-xs ${m.diffP1 >= 0 ? 'text-emerald-600' : 'text-rose-500'}">(${p1Diff})</span>
@@ -746,8 +841,9 @@
                   ${m.player2Name} <span class="text-xs ${m.diffP2 >= 0 ? 'text-emerald-600' : 'text-rose-500'}">(${p2Diff})</span>
                 </div>
               </div>
-              <div class="text-center font-mono font-bold text-indigo-600 text-sm bg-slate-50 py-1 rounded">
-                ${m.scoreStr}
+              <div class="flex justify-between items-center bg-slate-50 py-1 px-2 rounded">
+                <span class="font-mono font-bold text-indigo-600 text-sm mx-auto">${m.scoreStr}</span>
+                ${canEditMatch ? `<button onclick="openEditMatchModal('${m.id}')" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-2 py-1 rounded font-medium">Edit</button>` : ''}
               </div>
             </div>
           `;

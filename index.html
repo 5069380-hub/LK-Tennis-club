@@ -26,7 +26,7 @@
     </div>
   </header>
 
-  <!-- Navigation Tabs (with Ready to Play) -->
+  <!-- Navigation Tabs -->
   <nav class="flex border-b bg-white shadow-sm">
     <button onclick="switchTab('rankings')" id="tabRankings" class="flex-1 py-3 text-center font-medium text-indigo-600 border-b-2 border-indigo-600">Rankings</button>
     <button onclick="switchTab('matches')" id="tabMatches" class="flex-1 py-3 text-center font-medium text-gray-500">Matches</button>
@@ -47,9 +47,6 @@
     <section id="matchesSection" class="hidden space-y-4">
       <div class="flex justify-between items-center">
         <h2 class="text-lg font-semibold">Recent Matches</h2>
-        <button onclick="openAddMatchModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm px-3 py-1.5 rounded-lg font-medium transition">
-          + Add Match
-        </button>
       </div>
       <div id="matchesList" class="space-y-2">
         <div class="text-center text-gray-400 py-4 text-sm">Loading matches...</div>
@@ -220,9 +217,7 @@
       apiKey: "AIzaSyC93VsSVGfh14n2u3JShZ53-JJCqTiDvOs",
       authDomain: "lk-tennis-club.firebaseapp.com",
       projectId: "lk-tennis-club",
-      storageBucket: "lk-tennis-club.appspot.com",
-      messagingSenderId: "123456789",
-      appId: "1:123456789:web:abc123def456"
+      storageBucket: "lk-tennis-club.appspot.com"
     };
 
     if (!firebase.apps.length) {
@@ -252,7 +247,7 @@
     });
 
     function initData() {
-      // Load Players
+      // Fetch Players
       db.collection('players').onSnapshot(snapshot => {
         playersMap = {};
         const listEl = document.getElementById('playersList');
@@ -272,27 +267,30 @@
 
         players.sort((a, b) => (b.elo || 1500) - (a.elo || 1500));
 
-        players.forEach((p, index) => {
-          const card = document.createElement('div');
-          card.className = "bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer hover:border-indigo-300 transition";
-          card.onclick = () => openProfile(p.id);
-          const photo = p.photoURL || 'https://via.placeholder.com/50?text=Tennis';
+        if (players.length === 0) {
+          listEl.innerHTML = '<div class="text-center text-gray-400 py-4 text-sm">No players found</div>';
+        } else {
+          players.forEach((p, index) => {
+            const card = document.createElement('div');
+            card.className = "bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer hover:border-indigo-300 transition";
+            card.onclick = () => openProfile(p.id);
+            const photo = p.photoURL || 'https://via.placeholder.com/50?text=Tennis';
 
-          card.innerHTML = `
-            <div class="flex items-center space-x-3">
-              <span class="font-bold text-gray-400 w-5 text-center text-sm">#${index + 1}</span>
-              <img src="${photo}" class="w-10 h-10 rounded-full object-cover border">
-              <div>
-                <div class="font-semibold text-sm text-gray-900">${p.name || p.phone || 'Unnamed Player'}</div>
-                <div class="text-[11px] text-gray-400">${p.phone || ''}</div>
+            card.innerHTML = `
+              <div class="flex items-center space-x-3">
+                <span class="font-bold text-gray-400 w-5 text-center text-sm">#${index + 1}</span>
+                <img src="${photo}" class="w-10 h-10 rounded-full object-cover border">
+                <div>
+                  <div class="font-semibold text-sm text-gray-900">${p.name || p.phone || 'Player'}</div>
+                  <div class="text-[11px] text-gray-400">${p.phone || ''}</div>
+                </div>
               </div>
-            </div>
-            <div class="font-bold text-indigo-600 text-base">${p.elo || 1500}</div>
-          `;
-          listEl.appendChild(card);
-        });
+              <div class="font-bold text-indigo-600 text-base">${p.elo || 1500}</div>
+            `;
+            listEl.appendChild(card);
+          });
+        }
 
-        // Ready to play tab rendering
         if (readyPlayers.length === 0) {
           readyEl.innerHTML = '<div class="text-center text-gray-400 py-4 text-sm">No players currently looking for a match</div>';
         } else {
@@ -308,38 +306,48 @@
                   <div class="text-[11px] text-emerald-600 font-medium">Ready to play</div>
                 </div>
               </div>
-              <a href="tel:${p.phone}" class="bg-emerald-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium">Call</a>
+              <a href="tel:${p.phone || ''}" class="bg-emerald-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium">Call</a>
             `;
             readyEl.appendChild(card);
           });
         }
+      }, err => {
+        console.error("Firestore Error:", err);
+        document.getElementById('playersList').innerHTML = '<div class="text-center text-rose-500 py-4 text-sm">Error loading players</div>';
       });
 
-      // Load Matches
-      db.collection('matches').orderBy('timestamp', 'desc').onSnapshot(snapshot => {
+      // Fetch Matches
+      db.collection('matches').onSnapshot(snapshot => {
         allMatches = [];
         const matchesEl = document.getElementById('matchesList');
         matchesEl.innerHTML = '';
 
         snapshot.forEach(doc => {
-          const m = { id: doc.id, ...doc.data() };
-          allMatches.push(m);
-
-          const card = document.createElement('div');
-          card.className = "bg-white p-3 rounded-xl shadow-sm border border-gray-100 text-xs space-y-1";
-          const p1Name = playersMap[m.player1Id]?.name || playersMap[m.player1Id]?.phone || 'Player 1';
-          const p2Name = playersMap[m.player2Id]?.name || playersMap[m.player2Id]?.phone || 'Player 2';
-
-          card.innerHTML = `
-            <div class="flex justify-between font-medium">
-              <span class="text-indigo-900 font-bold">${p1Name} (${m.p1EloDiff > 0 ? '+' : ''}${m.p1EloDiff || 0})</span>
-              <span class="text-gray-400">vs</span>
-              <span class="text-indigo-900 font-bold">${p2Name} (${m.p2EloDiff > 0 ? '+' : ''}${m.p2EloDiff || 0})</span>
-            </div>
-            <div class="text-center font-semibold text-indigo-600">${m.score || ''}</div>
-          `;
-          matchesEl.appendChild(card);
+          allMatches.push({ id: doc.id, ...doc.data() });
         });
+
+        allMatches.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+
+        if (allMatches.length === 0) {
+          matchesEl.innerHTML = '<div class="text-center text-gray-400 py-4 text-sm">No recent matches</div>';
+        } else {
+          allMatches.forEach(m => {
+            const card = document.createElement('div');
+            card.className = "bg-white p-3 rounded-xl shadow-sm border border-gray-100 text-xs space-y-1";
+            const p1Name = playersMap[m.player1Id]?.name || playersMap[m.player1Id]?.phone || 'Player 1';
+            const p2Name = playersMap[m.player2Id]?.name || playersMap[m.player2Id]?.phone || 'Player 2';
+
+            card.innerHTML = `
+              <div class="flex justify-between font-medium">
+                <span class="text-indigo-900 font-bold">${p1Name} (${m.p1EloDiff > 0 ? '+' : ''}${m.p1EloDiff || 0})</span>
+                <span class="text-gray-400">vs</span>
+                <span class="text-indigo-900 font-bold">${p2Name} (${m.p2EloDiff > 0 ? '+' : ''}${m.p2EloDiff || 0})</span>
+              </div>
+              <div class="text-center font-semibold text-indigo-600">${m.score || ''}</div>
+            `;
+            matchesEl.appendChild(card);
+          });
+        }
       });
     }
 

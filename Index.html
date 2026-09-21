@@ -412,12 +412,10 @@
 
       allUsers.forEach(u => {
         if (u.latitude && u.longitude && u.isReady === true && u.lastActive) {
-          // Проверяем свежесть статуса (не более 2 часов)
           const lastActiveTime = u.lastActive.toDate ? u.lastActive.toDate().getTime() : new Date(u.lastActive).getTime();
           const isFresh = (now - lastActiveTime) <= TWO_HOURS_MS;
 
           if (isFresh) {
-            // Зеленый маркер для активного игрока
             const customIcon = L.divIcon({
               className: 'custom-player-marker',
               html: `<div style="background-color: #22c55e; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>`,
@@ -430,7 +428,7 @@
             const popupContent = `
               <div style="font-family: sans-serif; padding: 4px; min-width: 130px;">
                 <b style="font-size: 14px; color: #1e293b;">${u.name || 'Player'}</b><br>
-                <span style="color: #64748b; font-size: 12px;">Elo: ${u.rating || 1500}</span><br>
+                <span style="color: #64748b; font-size: 12px;">Elo: ${u.rating || 1500} | NTRP: ${u.ntrp || '-'}</span><br>
                 <span style="color: #16a34a; font-size: 11px; font-weight: bold;">🟢 Готов играть</span><br>
                 ${u.phone ? `<a href="tel:${u.phone}" style="display: block; text-align: center; margin-top: 6px; background: #4f46e5; color: white; padding: 4px 8px; border-radius: 6px; text-decoration: none; font-size: 12px;">Позвонить</a>` : ''}
               </div>
@@ -452,7 +450,6 @@
         renderNavLoggedIn();
         document.getElementById('add-match-btn').classList.remove('hidden');
 
-        // Automatically update location on login if permitted
         if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(async (pos) => {
             await db.collection('users').doc(user.uid).update({
@@ -468,8 +465,7 @@
         document.getElementById('add-match-btn').classList.add('hidden');
       }
       updateReadyButtonUI();
-      loadPlayers();
-      loadMatches();
+      loadMatchesAndPlayers();
     });
 
     // Tab switching
@@ -556,7 +552,19 @@
       }
     }
 
-    // Load players
+    // Combined load for accurate W/L stats calculation
+    function loadMatchesAndPlayers() {
+      db.collection('matches').orderBy('date', 'desc').limit(100).onSnapshot(matchSnapshot => {
+        allMatches = [];
+        matchSnapshot.forEach(doc => {
+          allMatches.push({ id: doc.id, ...doc.data() });
+        });
+        loadPlayers();
+        loadMatchesListUI();
+      });
+    }
+
+    // Load players with wins/losses and NTRP
     function loadPlayers() {
       db.collection('users').orderBy('rating', 'desc').onSnapshot(snapshot => {
         allUsers = [];
@@ -578,7 +586,20 @@
 
           const photo = u.photoURL || 'https://via.placeholder.com/50?text=Tennis';
 
-          // Проверяем активность для списков (готовы ли играть последние 2 часа)
+          // Считаем победы и поражения для игрока
+          let wins = 0;
+          let losses = 0;
+          allMatches.forEach(m => {
+            if (m.player1Id === u.id) {
+              if (m.diffP1 > 0) wins++;
+              else if (m.diffP1 < 0) losses++;
+            } else if (m.player2Id === u.id) {
+              if (m.diffP2 > 0) wins++;
+              else if (m.diffP2 < 0) losses++;
+            }
+          });
+
+          // Проверяем активность
           let isEffectivelyReady = false;
           if (u.isReady && u.lastActive) {
             const lastActiveTime = u.lastActive.toDate ? u.lastActive.toDate().getTime() : new Date(u.lastActive).getTime();
@@ -587,6 +608,9 @@
             }
           }
 
+          // Уровень NTRP из анкеты
+          const ntrpBadge = u.ntrp ? `<span class="bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded text-[10px] font-semibold">NTRP ${u.ntrp}</span>` : '';
+
           // All players list (Leaderboard)
           playersList.innerHTML += `
             <div onclick="openPlayerStats('${u.id}')" class="bg-white p-3 rounded-lg border border-slate-200 flex justify-between items-center shadow-sm cursor-pointer hover:border-indigo-300 transition">
@@ -594,11 +618,16 @@
                 <span class="font-bold text-slate-400 w-5 text-center">${rank++}</span>
                 <img src="${photo}" class="w-10 h-10 rounded-full object-cover border">
                 <div>
-                  <div class="font-semibold text-slate-800 flex items-center gap-1.5">
+                  <div class="font-semibold text-slate-800 flex items-center gap-2">
                     ${u.name}
                     ${isEffectivelyReady ? '<span class="w-2 h-2 rounded-full bg-emerald-500" title="Ready to play"></span>' : ''}
+                    ${ntrpBadge}
                   </div>
-                  <div class="text-xs text-slate-500">${u.phone || u.email}</div>
+                  <div class="text-xs text-slate-500 flex items-center gap-2 mt-0.5">
+                    <span>${u.phone || u.email}</span>
+                    <span class="text-slate-300">•</span>
+                    <span class="text-emerald-600 font-medium">${wins}W</span> / <span class="text-rose-500 font-medium">${losses}L</span>
+                  </div>
                 </div>
               </div>
               <div class="text-right">
@@ -615,7 +644,9 @@
                 <div class="flex items-center gap-3">
                   <img src="${photo}" class="w-10 h-10 rounded-full object-cover border">
                   <div>
-                    <div class="font-semibold text-slate-800">${u.name}</div>
+                    <div class="font-semibold text-slate-800 flex items-center gap-2">
+                      ${u.name} ${ntrpBadge}
+                    </div>
                     <div class="text-xs text-slate-500">Phone: ${u.phone || 'Not specified'}</div>
                   </div>
                 </div>
@@ -641,15 +672,12 @@
       });
     }
 
-    // Toggle Ready status (обновляет время lastActive только при нажатии)
+    // Toggle Ready status
     async function toggleReadyStatus() {
       if (!currentUser) return openAuthModal();
       const newStatus = !currentUserData?.isReady;
       
-      const updateData = {
-        isReady: newStatus
-      };
-      
+      const updateData = { isReady: newStatus };
       if (newStatus) {
         updateData.lastActive = firebase.firestore.FieldValue.serverTimestamp();
       }
@@ -963,43 +991,37 @@
       }
     }
 
-    function loadMatches() {
-      db.collection('matches').orderBy('date', 'desc').limit(50).onSnapshot(snapshot => {
-        allMatches = [];
-        const matchesList = document.getElementById('matches-list');
-        matchesList.innerHTML = '';
+    function loadMatchesListUI() {
+      const matchesList = document.getElementById('matches-list');
+      matchesList.innerHTML = '';
 
-        if (snapshot.empty) {
-          matchesList.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">No matches recorded yet.</p>';
-          return;
-        }
+      if (allMatches.length === 0) {
+        matchesList.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">No matches recorded yet.</p>';
+        return;
+      }
 
-        snapshot.forEach(doc => {
-          const m = { id: doc.id, ...doc.data() };
-          allMatches.push(m);
-          
-          const p1Diff = m.diffP1 >= 0 ? `+${m.diffP1}` : m.diffP1;
-          const p2Diff = m.diffP2 >= 0 ? `+${m.diffP2}` : m.diffP2;
-          const canEditMatch = currentUser && (m.player1Id === currentUser.uid || m.player2Id === currentUser.uid);
+      allMatches.forEach(m => {
+        const p1Diff = m.diffP1 >= 0 ? `+${m.diffP1}` : m.diffP1;
+        const p2Diff = m.diffP2 >= 0 ? `+${m.diffP2}` : m.diffP2;
+        const canEditMatch = currentUser && (m.player1Id === currentUser.uid || m.player2Id === currentUser.uid);
 
-          matchesList.innerHTML += `
-            <div class="bg-white p-3 rounded-lg border border-slate-200 shadow-sm relative">
-              <div class="flex justify-between items-center text-sm font-semibold text-slate-800 mb-1">
-                <div>
-                  ${m.player1Name} <span class="text-xs ${m.diffP1 >= 0 ? 'text-emerald-600' : 'text-rose-500'}">(${p1Diff})</span>
-                </div>
-                <span class="text-xs text-slate-400">vs</span>
-                <div>
-                  ${m.player2Name} <span class="text-xs ${m.diffP2 >= 0 ? 'text-emerald-600' : 'text-rose-500'}">(${p2Diff})</span>
-                </div>
+        matchesList.innerHTML += `
+          <div class="bg-white p-3 rounded-lg border border-slate-200 shadow-sm relative">
+            <div class="flex justify-between items-center text-sm font-semibold text-slate-800 mb-1">
+              <div>
+                ${m.player1Name} <span class="text-xs ${m.diffP1 >= 0 ? 'text-emerald-600' : 'text-rose-500'}">(${p1Diff})</span>
               </div>
-              <div class="flex justify-between items-center bg-slate-50 py-1 px-2 rounded">
-                <span class="font-mono font-bold text-indigo-600 text-sm mx-auto">${m.scoreStr}</span>
-                ${canEditMatch ? `<button onclick="openEditMatchModal('${m.id}')" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-2 py-1 rounded font-medium">Edit</button>` : ''}
+              <span class="text-xs text-slate-400">vs</span>
+              <div>
+                ${m.player2Name} <span class="text-xs ${m.diffP2 >= 0 ? 'text-emerald-600' : 'text-rose-500'}">(${p2Diff})</span>
               </div>
             </div>
-          `;
-        });
+            <div class="flex justify-between items-center bg-slate-50 py-1 px-2 rounded">
+              <span class="font-mono font-bold text-indigo-600 text-sm mx-auto">${m.scoreStr}</span>
+              ${canEditMatch ? `<button onclick="openEditMatchModal('${m.id}')" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-2 py-1 rounded font-medium">Edit</button>` : ''}
+            </div>
+          </div>
+        `;
       });
     }
   </script>

@@ -60,7 +60,7 @@
           </select>
         </div>
         <div>
-          <label class="block font-medium text-slate-600 mb-1">Filter by NTRP</label>
+          <label class="block font-medium text-slate-600 mb-1">Filter by Dynamic NTRP</label>
           <select id="filter-ntrp" onchange="renderUI()" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
             <option value="">All NTRP Levels</option>
             <option value="2.5">2.5</option>
@@ -226,7 +226,7 @@
             </select>
           </div>
           <div>
-            <label class="block font-medium text-slate-600 mb-1">NTRP Rating</label>
+            <label class="block font-medium text-slate-600 mb-1">NTRP Rating (Survey)</label>
             <select id="edit-ntrp" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
               <option value="">Select NTRP</option>
               <option value="2.5">2.5 (Beginner)</option>
@@ -701,7 +701,7 @@
       });
     }
 
-    // Render all UI components with filtering applied
+    // Render all UI components with filtering applied (using Dynamic NTRP)
     function renderUI() {
       const playersList = document.getElementById('players-list');
       const readyList = document.getElementById('ready-players-list');
@@ -720,9 +720,9 @@
       const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
 
       allUsers.forEach(u => {
-        // Apply Filters
+        // Apply Filters (using dynamicNtrp for NTRP filter)
         if (filterGender && u.gender !== filterGender) return;
-        if (filterNtrp && u.ntrp !== filterNtrp) return;
+        if (filterNtrp && u.dynamicNtrp !== filterNtrp) return;
 
         const photo = u.photoURL || 'https://via.placeholder.com/50?text=Tennis';
 
@@ -789,7 +789,7 @@
         readyList.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">No one on court. Click the button above to be first!</p>';
       }
 
-      // Populate Opponent dropdown (unfiltered so players can record matches against anyone)
+      // Populate Opponent dropdown (unfiltered)
       allUsers.forEach(u => {
         if (currentUser && u.id !== currentUser.uid) {
           selectOpponent.innerHTML += `<option value="${u.id}">${u.name} (${u.rating})</option>`;

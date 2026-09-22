@@ -48,6 +48,31 @@
         <h2 class="text-lg font-bold text-slate-700">Player Leaderboard (Elo)</h2>
         <span class="text-xs text-slate-500">Tap a player for details</span>
       </div>
+
+      <!-- Filters Panel -->
+      <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm grid grid-cols-2 gap-3 text-xs">
+        <div>
+          <label class="block font-medium text-slate-600 mb-1">Filter by Gender</label>
+          <select id="filter-gender" onchange="renderUI()" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+            <option value="">All Genders</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-medium text-slate-600 mb-1">Filter by NTRP</label>
+          <select id="filter-ntrp" onchange="renderUI()" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+            <option value="">All NTRP Levels</option>
+            <option value="2.5">2.5</option>
+            <option value="3.0">3.0</option>
+            <option value="3.5">3.5</option>
+            <option value="4.0">4.0</option>
+            <option value="4.5">4.5</option>
+            <option value="5.0">5.0</option>
+          </select>
+        </div>
+      </div>
+
       <div id="players-list" class="space-y-2">
         <!-- Player List -->
       </div>
@@ -76,7 +101,7 @@
       <div class="flex justify-between items-center">
         <div>
           <h2 class="text-lg font-bold text-slate-700">Player Map</h2>
-          <p class="text-xs text-slate-500">🟢 Отображаются только активные игроки (готовые играть за последние 2 часа)</p>
+          <p class="text-xs text-slate-500">🟢 Showing active players (ready in the last 2 hours)</p>
         </div>
         <button onclick="updateUserLocation()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs px-3 py-1.5 rounded-lg font-medium transition">
           Update My GPS 📍
@@ -137,6 +162,7 @@
       <div class="bg-slate-50 rounded-lg p-3 text-xs space-y-2 border border-slate-200">
         <h4 class="font-bold text-slate-700 border-b pb-1 text-[11px] uppercase tracking-wider">Player Questionnaire</h4>
         <div class="grid grid-cols-2 gap-2">
+          <div><span class="text-slate-400">Gender:</span> <span id="stats-gender" class="font-medium text-slate-800">N/A</span></div>
           <div><span class="text-slate-400">NTRP (Survey):</span> <span id="stats-ntrp" class="font-medium text-slate-800">N/A</span></div>
           <div><span class="text-slate-400">NTRP (Dynamic):</span> <span id="stats-dynamic-ntrp" class="font-medium text-indigo-600 font-bold">N/A</span></div>
           <div><span class="text-slate-400">Age:</span> <span id="stats-age" class="font-medium text-slate-800">N/A</span></div>
@@ -192,12 +218,16 @@
         </div>
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="block font-medium text-slate-600 mb-1">Age</label>
-            <input type="number" id="edit-age" placeholder="e.g. 32" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+            <label class="block font-medium text-slate-600 mb-1">Gender</label>
+            <select id="edit-gender" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+              <option value="">Select Gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
           </div>
           <div>
             <label class="block font-medium text-slate-600 mb-1">NTRP Rating</label>
-            <select id="edit-ntrp" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+            <select id="edit-ntrp" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
               <option value="">Select NTRP</option>
               <option value="2.5">2.5 (Beginner)</option>
               <option value="3.0">3.0 (Intermediate)</option>
@@ -210,35 +240,41 @@
         </div>
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="block font-medium text-slate-600 mb-1">Height</label>
-            <input type="text" id="edit-height" placeholder="e.g. 180 cm" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+            <label class="block font-medium text-slate-600 mb-1">Age</label>
+            <input type="number" id="edit-age" placeholder="e.g. 32" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
           </div>
           <div>
-            <label class="block font-medium text-slate-600 mb-1">Weight</label>
-            <input type="text" id="edit-weight" placeholder="e.g. 75 kg" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+            <label class="block font-medium text-slate-600 mb-1">Height</label>
+            <input type="text" id="edit-height" placeholder="e.g. 180 cm" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
           </div>
         </div>
         <div class="grid grid-cols-2 gap-2">
           <div>
+            <label class="block font-medium text-slate-600 mb-1">Weight</label>
+            <input type="text" id="edit-weight" placeholder="e.g. 75 kg" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+          <div>
             <label class="block font-medium text-slate-600 mb-1">Handedness</label>
-            <select id="edit-hand" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+            <select id="edit-hand" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
               <option value="">Select Hand</option>
               <option value="Right-handed">Right-handed</option>
               <option value="Left-handed">Left-handed</option>
             </select>
           </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="block font-medium text-slate-600 mb-1">Backhand</label>
-            <select id="edit-backhand" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+            <select id="edit-backhand" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
               <option value="">Select Backhand</option>
               <option value="Two-handed">Two-handed</option>
               <option value="One-handed">One-handed</option>
             </select>
           </div>
-        </div>
-        <div>
-          <label class="block font-medium text-slate-600 mb-1">Racket & Setup</label>
-          <input type="text" id="edit-racket" placeholder="e.g. Wilson Blade 98" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+          <div>
+            <label class="block font-medium text-slate-600 mb-1">Racket & Setup</label>
+            <input type="text" id="edit-racket" placeholder="e.g. Wilson Blade 98" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
         </div>
         <div>
           <label class="block font-medium text-slate-600 mb-1">Preferred Locations / Courts</label>
@@ -298,7 +334,7 @@
         <input type="hidden" id="edit-match-id">
         <div>
           <label class="block text-xs font-medium text-slate-600 mb-1">Opponent</label>
-          <select id="match-opponent" required class="w-full border rounded-lg p-2 text-sm outline-none">
+          <select id="match-opponent" required class="w-full border rounded-lg p-2 text-sm outline-none bg-white">
             <!-- Opponent select list -->
           </select>
         </div>
@@ -429,8 +465,8 @@
               <div style="font-family: sans-serif; padding: 4px; min-width: 130px;">
                 <b style="font-size: 14px; color: #1e293b;">${u.name || 'Player'}</b><br>
                 <span style="color: #64748b; font-size: 12px;">Elo: ${u.rating} | NTRP: ${u.dynamicNtrp}</span><br>
-                <span style="color: #16a34a; font-size: 11px; font-weight: bold;">🟢 Готов играть</span><br>
-                ${u.phone ? `<a href="tel:${u.phone}" style="display: block; text-align: center; margin-top: 6px; background: #4f46e5; color: white; padding: 4px 8px; border-radius: 6px; text-decoration: none; font-size: 12px;">Позвонить</a>` : ''}
+                <span style="color: #16a34a; font-size: 11px; font-weight: bold;">🟢 Ready to play</span><br>
+                ${u.phone ? `<a href="tel:${u.phone}" style="display: block; text-align: center; margin-top: 6px; background: #4f46e5; color: white; padding: 4px 8px; border-radius: 6px; text-decoration: none; font-size: 12px;">Call</a>` : ''}
               </div>
             `;
 
@@ -649,7 +685,6 @@
             allMatches.unshift(m);
           });
 
-          // Рассчитываем динамический NTRP для каждого игрока
           Object.values(usersMap).forEach(u => {
             u.dynamicNtrp = calculateDynamicNTRP(u.rating);
           });
@@ -666,7 +701,7 @@
       });
     }
 
-    // Render all UI components
+    // Render all UI components with filtering applied
     function renderUI() {
       const playersList = document.getElementById('players-list');
       const readyList = document.getElementById('ready-players-list');
@@ -676,11 +711,19 @@
       readyList.innerHTML = '';
       selectOpponent.innerHTML = '<option value="">Select opponent...</option>';
 
+      // Read filter values
+      const filterGender = document.getElementById('filter-gender').value;
+      const filterNtrp = document.getElementById('filter-ntrp').value;
+
       let rank = 1;
       const now = new Date().getTime();
       const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
 
       allUsers.forEach(u => {
+        // Apply Filters
+        if (filterGender && u.gender !== filterGender) return;
+        if (filterNtrp && u.ntrp !== filterNtrp) return;
+
         const photo = u.photoURL || 'https://via.placeholder.com/50?text=Tennis';
 
         let isEffectivelyReady = false;
@@ -736,16 +779,22 @@
             </div>
           `;
         }
-
-        // Opponent select
-        if (currentUser && u.id !== currentUser.uid) {
-          selectOpponent.innerHTML += `<option value="${u.id}">${u.name} (${u.rating})</option>`;
-        }
       });
+
+      if (playersList.innerHTML === '') {
+        playersList.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">No players found matching selected filters.</p>';
+      }
 
       if (readyList.innerHTML === '') {
         readyList.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">No one on court. Click the button above to be first!</p>';
       }
+
+      // Populate Opponent dropdown (unfiltered so players can record matches against anyone)
+      allUsers.forEach(u => {
+        if (currentUser && u.id !== currentUser.uid) {
+          selectOpponent.innerHTML += `<option value="${u.id}">${u.name} (${u.rating})</option>`;
+        }
+      });
 
       renderMatchesListUI();
 
@@ -840,6 +889,7 @@
       document.getElementById('stats-player-elo').innerText = player.rating;
 
       // Populate Questionnaire
+      document.getElementById('stats-gender').innerText = player.gender || 'N/A';
       document.getElementById('stats-ntrp').innerText = player.ntrp || 'N/A';
       document.getElementById('stats-dynamic-ntrp').innerText = player.dynamicNtrp;
       document.getElementById('stats-age').innerText = player.age || 'N/A';
@@ -903,6 +953,7 @@
       document.getElementById('edit-name').value = currentUserData.name || '';
       document.getElementById('edit-photoURL').value = currentUserData.photoURL || '';
       document.getElementById('edit-photoFile').value = '';
+      document.getElementById('edit-gender').value = currentUserData.gender || '';
       document.getElementById('edit-age').value = currentUserData.age || '';
       document.getElementById('edit-height').value = currentUserData.height || '';
       document.getElementById('edit-weight').value = currentUserData.weight || '';
@@ -943,6 +994,7 @@
         const updatedFields = {
           name: document.getElementById('edit-name').value,
           photoURL: photoURL,
+          gender: document.getElementById('edit-gender').value,
           age: document.getElementById('edit-age').value,
           height: document.getElementById('edit-height').value,
           weight: document.getElementById('edit-weight').value,

@@ -50,7 +50,7 @@
       </div>
 
       <!-- Filters Panel -->
-      <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm grid grid-cols-2 gap-3 text-xs">
+      <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
         <div>
           <label class="block font-medium text-slate-600 mb-1">Filter by Gender</label>
           <select id="filter-gender" onchange="renderUI()" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
@@ -69,6 +69,12 @@
             <option value="4.0">4.0</option>
             <option value="4.5">4.5</option>
             <option value="5.0">5.0</option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-medium text-slate-600 mb-1">Filter by Court / Location</label>
+          <select id="filter-location" onchange="renderUI()" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+            <option value="">All Locations</option>
           </select>
         </div>
       </div>
@@ -278,7 +284,7 @@
         </div>
         <div>
           <label class="block font-medium text-slate-600 mb-1">Preferred Locations / Courts</label>
-          <input type="text" id="edit-locations" placeholder="e.g. Central Park" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+          <input type="text" id="edit-locations" placeholder="e.g. Central Park, Griffith Park" class="w-full border rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
         <div>
           <label class="block font-medium text-slate-600 mb-1">Preferred Play Time</label>
@@ -696,12 +702,36 @@
             renderNavLoggedIn();
           }
 
+          updateLocationsFilterOptions();
           renderUI();
         });
       });
     }
 
-    // Render all UI components with filtering applied (using Dynamic NTRP)
+    // Automatically collect unique locations from player profiles and populate filter dropdown
+    function updateLocationsFilterOptions() {
+      const locationSelect = document.getElementById('filter-location');
+      const currentSelected = locationSelect.value;
+      
+      const uniqueLocations = new Set();
+      allUsers.forEach(u => {
+        if (u.locations) {
+          // Splitting by comma if multiple locations entered in one profile
+          u.locations.split(',').forEach(loc => {
+            const trimmed = loc.trim();
+            if (trimmed) uniqueLocations.add(trimmed);
+          });
+        }
+      });
+
+      locationSelect.innerHTML = '<option value="">All Locations</option>';
+      Array.from(uniqueLocations).sort().forEach(loc => {
+        const selected = loc === currentSelected ? 'selected' : '';
+        locationSelect.innerHTML += `<option value="${loc}" ${selected}>${loc}</option>`;
+      });
+    }
+
+    // Render all UI components with filtering applied (Gender, Dynamic NTRP, Location)
     function renderUI() {
       const playersList = document.getElementById('players-list');
       const readyList = document.getElementById('ready-players-list');
@@ -714,15 +744,20 @@
       // Read filter values
       const filterGender = document.getElementById('filter-gender').value;
       const filterNtrp = document.getElementById('filter-ntrp').value;
+      const filterLocation = document.getElementById('filter-location').value;
 
       let rank = 1;
       const now = new Date().getTime();
       const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
 
       allUsers.forEach(u => {
-        // Apply Filters (using dynamicNtrp for NTRP filter)
+        // Apply Filters
         if (filterGender && u.gender !== filterGender) return;
         if (filterNtrp && u.dynamicNtrp !== filterNtrp) return;
+        if (filterLocation) {
+          const hasLocation = u.locations && u.locations.toLowerCase().includes(filterLocation.toLowerCase());
+          if (!hasLocation) return;
+        }
 
         const photo = u.photoURL || 'https://via.placeholder.com/50?text=Tennis';
 
@@ -735,6 +770,7 @@
         }
 
         const ntrpBadge = `<span class="bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded text-[10px] font-semibold">NTRP ${u.dynamicNtrp}</span>`;
+        const locBadge = u.locations ? `<span class="text-[11px] text-slate-400 block truncate max-w-[200px]">📍 ${u.locations}</span>` : '';
 
         // Leaderboard item
         playersList.innerHTML += `
@@ -748,6 +784,7 @@
                   ${isEffectivelyReady ? '<span class="w-2 h-2 rounded-full bg-emerald-500" title="Ready to play"></span>' : ''}
                   ${ntrpBadge}
                 </div>
+                ${locBadge}
                 <div class="text-xs text-slate-500 flex items-center gap-2 mt-0.5">
                   <span>${u.phone || u.email}</span>
                   <span class="text-slate-300">•</span>

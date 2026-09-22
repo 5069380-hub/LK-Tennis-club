@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -138,7 +137,8 @@
       <div class="bg-slate-50 rounded-lg p-3 text-xs space-y-2 border border-slate-200">
         <h4 class="font-bold text-slate-700 border-b pb-1 text-[11px] uppercase tracking-wider">Player Questionnaire</h4>
         <div class="grid grid-cols-2 gap-2">
-          <div><span class="text-slate-400">NTRP Rating:</span> <span id="stats-ntrp" class="font-medium text-slate-800">N/A</span></div>
+          <div><span class="text-slate-400">NTRP (Survey):</span> <span id="stats-ntrp" class="font-medium text-slate-800">N/A</span></div>
+          <div><span class="text-slate-400">NTRP (Dynamic):</span> <span id="stats-dynamic-ntrp" class="font-medium text-indigo-600 font-bold">N/A</span></div>
           <div><span class="text-slate-400">Age:</span> <span id="stats-age" class="font-medium text-slate-800">N/A</span></div>
           <div><span class="text-slate-400">Height:</span> <span id="stats-height" class="font-medium text-slate-800">N/A</span></div>
           <div><span class="text-slate-400">Weight:</span> <span id="stats-weight" class="font-medium text-slate-800">N/A</span></div>
@@ -428,7 +428,7 @@
             const popupContent = `
               <div style="font-family: sans-serif; padding: 4px; min-width: 130px;">
                 <b style="font-size: 14px; color: #1e293b;">${u.name || 'Player'}</b><br>
-                <span style="color: #64748b; font-size: 12px;">Elo: ${u.rating || 1500} | NTRP: ${u.ntrp || '-'}</span><br>
+                <span style="color: #64748b; font-size: 12px;">Elo: ${u.rating} | NTRP: ${u.dynamicNtrp}</span><br>
                 <span style="color: #16a34a; font-size: 11px; font-weight: bold;">🟢 Готов играть</span><br>
                 ${u.phone ? `<a href="tel:${u.phone}" style="display: block; text-align: center; margin-top: 6px; background: #4f46e5; color: white; padding: 4px 8px; border-radius: 6px; text-decoration: none; font-size: 12px;">Позвонить</a>` : ''}
               </div>
@@ -465,7 +465,7 @@
         document.getElementById('add-match-btn').classList.add('hidden');
       }
       updateReadyButtonUI();
-      loadMatchesAndPlayers();
+      loadData();
     });
 
     // Tab switching
@@ -552,124 +552,207 @@
       }
     }
 
-    // Combined load for accurate W/L stats calculation
-    function loadMatchesAndPlayers() {
-      db.collection('matches').orderBy('date', 'desc').limit(100).onSnapshot(matchSnapshot => {
-        allMatches = [];
+    // Elo calculation helper
+    function calculateSetElo(ratingA, ratingB, setsA, setsB) {
+      const K = 32;
+      let totalChangeA = 0;
+      let totalChangeB = 0;
+
+      for (let i = 0; i < setsA.length; i++) {
+        const scoreA = setsA[i];
+        const scoreB = setsB[i];
+
+        let actualA = 0.5;
+        if (scoreA > scoreB) actualA = 1;
+        else if (scoreB > scoreA) actualA = 0;
+
+        const expectedA = 1 / (1 + Math.pow(10, (ratingB - ratingA) / 400));
+        const change = K * (actualA - expectedA);
+
+        totalChangeA += change;
+        totalChangeB -= change;
+      }
+
+      return {
+        diffA: Math.round(totalChangeA),
+        diffB: Math.round(totalChangeB)
+      };
+    }
+
+    // Dynamic NTRP calculation based on Elo
+    function calculateDynamicNTRP(eloRating) {
+      const baseElo = 1500;
+      const baseNtrp = 3.0;
+      const ntrpDifference = (eloRating - baseElo) / 200;
+      let calculatedNtrp = baseNtrp + ntrpDifference;
+      calculatedNtrp = Math.max(2.0, Math.min(5.5, calculatedNtrp));
+      return (Math.round(calculatedNtrp * 2) / 2).toFixed(1);
+    }
+
+    // Combined load with Dynamic Elo & NTRP Calculation
+    function loadData() {
+      db.collection('matches').orderBy('date', 'asc').onSnapshot(matchSnapshot => {
+        const rawMatches = [];
         matchSnapshot.forEach(doc => {
-          allMatches.push({ id: doc.id, ...doc.data() });
+          rawMatches.push({ id: doc.id, ...doc.data() });
         });
-        loadPlayers();
-        loadMatchesListUI();
+
+        db.collection('users').onSnapshot(userSnapshot => {
+          const usersMap = {};
+          userSnapshot.forEach(doc => {
+            usersMap[doc.id] = { id: doc.id, rating: 1500, wins: 0, losses: 0, totalMatches: 0, ...doc.data() };
+          });
+
+          Object.keys(usersMap).forEach(uid => {
+            usersMap[uid].rating = 1500;
+            usersMap[uid].wins = 0;
+            usersMap[uid].losses = 0;
+            usersMap[uid].totalMatches = 0;
+          });
+
+          allMatches = [];
+
+          rawMatches.forEach(m => {
+            const p1 = usersMap[m.player1Id];
+            const p2 = usersMap[m.player2Id];
+
+            if (p1 && p2) {
+              let setsA = [6, 0], setsB = [0, 6];
+              if (m.scoreStr) {
+                const parts = m.scoreStr.split(', ');
+                setsA = [];
+                setsB = [];
+                parts.forEach(p => {
+                  const s = p.split(':');
+                  if (s.length === 2) {
+                    setsA.push(parseInt(s[0]) || 0);
+                    setsB.push(parseInt(s[1]) || 0);
+                  }
+                });
+                if (setsA.length === 0) { setsA = [0]; setsB = [0]; }
+              }
+
+              const eloResult = calculateSetElo(p1.rating, p2.rating, setsA, setsB);
+              
+              m.diffP1 = eloResult.diffA;
+              m.diffP2 = eloResult.diffB;
+
+              p1.rating += eloResult.diffA;
+              p2.rating += eloResult.diffB;
+
+              p1.totalMatches++;
+              p2.totalMatches++;
+
+              if (eloResult.diffA > 0) { p1.wins++; p2.losses++; }
+              else if (eloResult.diffA < 0) { p1.losses++; p2.wins++; }
+            }
+            allMatches.unshift(m);
+          });
+
+          // Рассчитываем динамический NTRP для каждого игрока
+          Object.values(usersMap).forEach(u => {
+            u.dynamicNtrp = calculateDynamicNTRP(u.rating);
+          });
+
+          allUsers = Object.values(usersMap).sort((a, b) => b.rating - a.rating);
+
+          if (currentUser && usersMap[currentUser.uid]) {
+            currentUserData = usersMap[currentUser.uid];
+            renderNavLoggedIn();
+          }
+
+          renderUI();
+        });
       });
     }
 
-    // Load players with wins/losses and NTRP
-    function loadPlayers() {
-      db.collection('users').orderBy('rating', 'desc').onSnapshot(snapshot => {
-        allUsers = [];
-        const playersList = document.getElementById('players-list');
-        const readyList = document.getElementById('ready-players-list');
-        const selectOpponent = document.getElementById('match-opponent');
+    // Render all UI components
+    function renderUI() {
+      const playersList = document.getElementById('players-list');
+      const readyList = document.getElementById('ready-players-list');
+      const selectOpponent = document.getElementById('match-opponent');
 
-        playersList.innerHTML = '';
-        readyList.innerHTML = '';
-        selectOpponent.innerHTML = '<option value="">Select opponent...</option>';
+      playersList.innerHTML = '';
+      readyList.innerHTML = '';
+      selectOpponent.innerHTML = '<option value="">Select opponent...</option>';
 
-        let rank = 1;
-        const now = new Date().getTime();
-        const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
+      let rank = 1;
+      const now = new Date().getTime();
+      const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
 
-        snapshot.forEach(doc => {
-          const u = { id: doc.id, ...doc.data() };
-          allUsers.push(u);
+      allUsers.forEach(u => {
+        const photo = u.photoURL || 'https://via.placeholder.com/50?text=Tennis';
 
-          const photo = u.photoURL || 'https://via.placeholder.com/50?text=Tennis';
-
-          // Считаем победы и поражения для игрока
-          let wins = 0;
-          let losses = 0;
-          allMatches.forEach(m => {
-            if (m.player1Id === u.id) {
-              if (m.diffP1 > 0) wins++;
-              else if (m.diffP1 < 0) losses++;
-            } else if (m.player2Id === u.id) {
-              if (m.diffP2 > 0) wins++;
-              else if (m.diffP2 < 0) losses++;
-            }
-          });
-
-          // Проверяем активность
-          let isEffectivelyReady = false;
-          if (u.isReady && u.lastActive) {
-            const lastActiveTime = u.lastActive.toDate ? u.lastActive.toDate().getTime() : new Date(u.lastActive).getTime();
-            if ((now - lastActiveTime) <= TWO_HOURS_MS) {
-              isEffectivelyReady = true;
-            }
+        let isEffectivelyReady = false;
+        if (u.isReady && u.lastActive) {
+          const lastActiveTime = u.lastActive.toDate ? u.lastActive.toDate().getTime() : new Date(u.lastActive).getTime();
+          if ((now - lastActiveTime) <= TWO_HOURS_MS) {
+            isEffectivelyReady = true;
           }
+        }
 
-          // Уровень NTRP из анкеты
-          const ntrpBadge = u.ntrp ? `<span class="bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded text-[10px] font-semibold">NTRP ${u.ntrp}</span>` : '';
+        const ntrpBadge = `<span class="bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded text-[10px] font-semibold">NTRP ${u.dynamicNtrp}</span>`;
 
-          // All players list (Leaderboard)
-          playersList.innerHTML += `
-            <div onclick="openPlayerStats('${u.id}')" class="bg-white p-3 rounded-lg border border-slate-200 flex justify-between items-center shadow-sm cursor-pointer hover:border-indigo-300 transition">
+        // Leaderboard item
+        playersList.innerHTML += `
+          <div onclick="openPlayerStats('${u.id}')" class="bg-white p-3 rounded-lg border border-slate-200 flex justify-between items-center shadow-sm cursor-pointer hover:border-indigo-300 transition">
+            <div class="flex items-center gap-3">
+              <span class="font-bold text-slate-400 w-5 text-center">${rank++}</span>
+              <img src="${photo}" class="w-10 h-10 rounded-full object-cover border">
+              <div>
+                <div class="font-semibold text-slate-800 flex items-center gap-2">
+                  ${u.name}
+                  ${isEffectivelyReady ? '<span class="w-2 h-2 rounded-full bg-emerald-500" title="Ready to play"></span>' : ''}
+                  ${ntrpBadge}
+                </div>
+                <div class="text-xs text-slate-500 flex items-center gap-2 mt-0.5">
+                  <span>${u.phone || u.email}</span>
+                  <span class="text-slate-300">•</span>
+                  <span class="text-emerald-600 font-medium">${u.wins}W</span> / <span class="text-rose-500 font-medium">${u.losses}L</span>
+                </div>
+              </div>
+            </div>
+            <div class="text-right">
+              <span class="font-bold text-indigo-600 text-lg">${u.rating}</span>
+              <span class="text-[10px] text-slate-400 block">Elo</span>
+            </div>
+          </div>
+        `;
+
+        // Ready to Play list
+        if (isEffectivelyReady) {
+          readyList.innerHTML += `
+            <div class="bg-white p-3 rounded-lg border border-emerald-200 flex justify-between items-center shadow-sm">
               <div class="flex items-center gap-3">
-                <span class="font-bold text-slate-400 w-5 text-center">${rank++}</span>
                 <img src="${photo}" class="w-10 h-10 rounded-full object-cover border">
                 <div>
                   <div class="font-semibold text-slate-800 flex items-center gap-2">
-                    ${u.name}
-                    ${isEffectivelyReady ? '<span class="w-2 h-2 rounded-full bg-emerald-500" title="Ready to play"></span>' : ''}
-                    ${ntrpBadge}
+                    ${u.name} ${ntrpBadge}
                   </div>
-                  <div class="text-xs text-slate-500 flex items-center gap-2 mt-0.5">
-                    <span>${u.phone || u.email}</span>
-                    <span class="text-slate-300">•</span>
-                    <span class="text-emerald-600 font-medium">${wins}W</span> / <span class="text-rose-500 font-medium">${losses}L</span>
-                  </div>
+                  <div class="text-xs text-slate-500">Phone: ${u.phone || 'Not specified'}</div>
                 </div>
               </div>
-              <div class="text-right">
-                <span class="font-bold text-indigo-600 text-lg">${u.rating || 1500}</span>
-                <span class="text-[10px] text-slate-400 block">Elo</span>
-              </div>
+              <a href="tel:${u.phone}" class="bg-emerald-100 text-emerald-800 text-xs px-3 py-1.5 rounded-lg font-medium hover:bg-emerald-200">Call</a>
             </div>
           `;
-
-          // Ready to Play list
-          if (isEffectivelyReady) {
-            readyList.innerHTML += `
-              <div class="bg-white p-3 rounded-lg border border-emerald-200 flex justify-between items-center shadow-sm">
-                <div class="flex items-center gap-3">
-                  <img src="${photo}" class="w-10 h-10 rounded-full object-cover border">
-                  <div>
-                    <div class="font-semibold text-slate-800 flex items-center gap-2">
-                      ${u.name} ${ntrpBadge}
-                    </div>
-                    <div class="text-xs text-slate-500">Phone: ${u.phone || 'Not specified'}</div>
-                  </div>
-                </div>
-                <a href="tel:${u.phone}" class="bg-emerald-100 text-emerald-800 text-xs px-3 py-1.5 rounded-lg font-medium hover:bg-emerald-200">Call</a>
-              </div>
-            `;
-          }
-
-          // Opponent select
-          if (currentUser && u.id !== currentUser.uid) {
-            selectOpponent.innerHTML += `<option value="${u.id}">${u.name} (${u.rating || 1500})</option>`;
-          }
-        });
-
-        if (readyList.innerHTML === '') {
-          readyList.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">No one on court. Click the button above to be first!</p>';
         }
 
-        if (selectedPlayerIdForStats) {
-          openPlayerStats(selectedPlayerIdForStats);
+        // Opponent select
+        if (currentUser && u.id !== currentUser.uid) {
+          selectOpponent.innerHTML += `<option value="${u.id}">${u.name} (${u.rating})</option>`;
         }
-        renderPlayersOnMap();
       });
+
+      if (readyList.innerHTML === '') {
+        readyList.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">No one on court. Click the button above to be first!</p>';
+      }
+
+      renderMatchesListUI();
+
+      if (selectedPlayerIdForStats) {
+        openPlayerStats(selectedPlayerIdForStats);
+      }
+      renderPlayersOnMap();
     }
 
     // Toggle Ready status
@@ -754,10 +837,11 @@
       document.getElementById('stats-player-photo').src = player.photoURL || 'https://via.placeholder.com/80?text=Tennis';
       document.getElementById('stats-player-name').innerText = player.name;
       document.getElementById('stats-player-phone').innerText = player.phone ? `Tel: ${player.phone}` : player.email;
-      document.getElementById('stats-player-elo').innerText = player.rating || 1500;
+      document.getElementById('stats-player-elo').innerText = player.rating;
 
       // Populate Questionnaire
       document.getElementById('stats-ntrp').innerText = player.ntrp || 'N/A';
+      document.getElementById('stats-dynamic-ntrp').innerText = player.dynamicNtrp;
       document.getElementById('stats-age').innerText = player.age || 'N/A';
       document.getElementById('stats-height').innerText = player.height || 'N/A';
       document.getElementById('stats-weight').innerText = player.weight || 'N/A';
@@ -775,19 +859,9 @@
       }
 
       const playerMatches = allMatches.filter(m => m.player1Id === playerId || m.player2Id === playerId);
-      
-      let wins = 0;
-      let losses = 0;
       let matchesHtml = '';
 
       playerMatches.forEach(m => {
-        const isPlayer1 = m.player1Id === playerId;
-        const diff = isPlayer1 ? m.diffP1 : m.diffP2;
-        const isWin = diff > 0;
-        
-        if (isWin) wins++;
-        else if (diff < 0) losses++;
-
         const p1DiffStr = m.diffP1 >= 0 ? `+${m.diffP1}` : m.diffP1;
         const p2DiffStr = m.diffP2 >= 0 ? `+${m.diffP2}` : m.diffP2;
         const canEditMatch = currentUser && (m.player1Id === currentUser.uid || m.player2Id === currentUser.uid);
@@ -807,9 +881,9 @@
         `;
       });
 
-      document.getElementById('stats-total').innerText = playerMatches.length;
-      document.getElementById('stats-wins').innerText = wins;
-      document.getElementById('stats-losses').innerText = losses;
+      document.getElementById('stats-total').innerText = player.totalMatches;
+      document.getElementById('stats-wins').innerText = player.wins;
+      document.getElementById('stats-losses').innerText = player.losses;
       
       document.getElementById('stats-matches-list').innerHTML = matchesHtml || '<p class="text-xs text-slate-400 text-center py-2">No matches played yet.</p>';
 
@@ -889,35 +963,6 @@
       }
     }
 
-    // Elo calculation
-    function calculateSetElo(ratingA, ratingB, setsA, setsB) {
-      const K = 32;
-      let totalChangeA = 0;
-      let totalChangeB = 0;
-
-      for (let i = 0; i < setsA.length; i++) {
-        const scoreA = setsA[i];
-        const scoreB = setsB[i];
-
-        let actualA = 0.5;
-        if (scoreA > scoreB) actualA = 1;
-        else if (scoreB > scoreA) actualA = 0;
-
-        const expectedA = 1 / (1 + Math.pow(10, (ratingB - ratingA) / 400));
-        const change = K * (actualA - expectedA);
-
-        totalChangeA += change;
-        totalChangeB -= change;
-      }
-
-      return {
-        newRatingA: Math.round(ratingA + totalChangeA),
-        newRatingB: Math.round(ratingB + totalChangeB),
-        diffA: Math.round(totalChangeA),
-        diffB: Math.round(totalChangeB)
-      };
-    }
-
     async function saveMatch(e) {
       e.preventDefault();
       const matchId = document.getElementById('edit-match-id').value;
@@ -933,55 +978,24 @@
       const s3A = document.getElementById('s3-p1').value ? parseInt(document.getElementById('s3-p1').value) : null;
       const s3B = document.getElementById('s3-p2').value ? parseInt(document.getElementById('s3-p2').value) : null;
 
-      const setsA = [s1A, s2A];
-      const setsB = [s1B, s2B];
-      if (s3A !== null && s3B !== null) {
-        setsA.push(s3A);
-        setsB.push(s3B);
-      }
-
       const scoreStr = `${s1A}:${s1B}, ${s2A}:${s2B}` + (s3A !== null ? `, ${s3A}:${s3B}` : '');
 
       try {
         if (matchId) {
-          const oldMatchDoc = await db.collection('matches').doc(matchId).get();
-          if (oldMatchDoc.exists) {
-            const oldMatch = oldMatchDoc.data();
-            const p1Doc = await db.collection('users').doc(oldMatch.player1Id).get();
-            const p2Doc = await db.collection('users').doc(oldMatch.player2Id).get();
-            
-            let p1Rating = (p1Doc.data().rating || 1500) - oldMatch.diffP1;
-            let p2Rating = (p2Doc.data().rating || 1500) - oldMatch.diffP2;
-
-            const eloResult = calculateSetElo(p1Rating, p2Rating, setsA, setsB);
-
-            await db.collection('matches').doc(matchId).update({
-              player2Id: opponent.id,
-              player2Name: opponent.name,
-              scoreStr: scoreStr,
-              diffP1: eloResult.diffA,
-              diffP2: eloResult.diffB
-            });
-
-            await db.collection('users').doc(oldMatch.player1Id).update({ rating: p1Rating + eloResult.diffA });
-            await db.collection('users').doc(opponent.id).update({ rating: p2Rating + eloResult.diffB });
-          }
+          await db.collection('matches').doc(matchId).update({
+            player2Id: opponent.id,
+            player2Name: opponent.name,
+            scoreStr: scoreStr
+          });
         } else {
-          const eloResult = calculateSetElo(currentUserData.rating || 1500, opponent.rating || 1500, setsA, setsB);
-
           await db.collection('matches').add({
             player1Id: currentUser.uid,
             player1Name: currentUserData.name,
             player2Id: opponent.id,
             player2Name: opponent.name,
             scoreStr: scoreStr,
-            diffP1: eloResult.diffA,
-            diffP2: eloResult.diffB,
             date: firebase.firestore.FieldValue.serverTimestamp()
           });
-
-          await db.collection('users').doc(currentUser.uid).update({ rating: eloResult.newRatingA });
-          await db.collection('users').doc(opponent.id).update({ rating: eloResult.newRatingB });
         }
 
         closeMatchModal();
@@ -991,7 +1005,7 @@
       }
     }
 
-    function loadMatchesListUI() {
+    function renderMatchesListUI() {
       const matchesList = document.getElementById('matches-list');
       matchesList.innerHTML = '';
 

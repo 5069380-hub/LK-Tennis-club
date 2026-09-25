@@ -317,6 +317,11 @@
           <input type="tel" id="auth-phone" placeholder="+1..." class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
         </div>
 
+        <!-- Forgot Password Link -->
+        <div id="forgot-password-container" class="text-right">
+          <button type="button" onclick="forgotPassword()" class="text-xs text-indigo-600 hover:underline">Forgot password?</button>
+        </div>
+
         <button type="submit" id="auth-submit-btn" class="w-full bg-indigo-600 text-white py-2 rounded-lg font-medium hover:bg-indigo-700 transition mt-2">
           Log In
         </button>
@@ -563,8 +568,24 @@
       document.getElementById('auth-submit-btn').innerText = isRegisterMode ? 'Sign Up' : 'Log In';
       document.getElementById('name-group').classList.toggle('hidden', !isRegisterMode);
       document.getElementById('phone-group').classList.toggle('hidden', !isRegisterMode);
+      document.getElementById('forgot-password-container').classList.toggle('hidden', isRegisterMode);
       document.getElementById('auth-toggle-text').innerText = isRegisterMode ? 'Already have an account?' : "Don't have an account?";
       document.getElementById('auth-toggle-btn').innerText = isRegisterMode ? 'Log In' : 'Sign Up';
+    }
+
+    // Password Reset function
+    async function forgotPassword() {
+      const email = document.getElementById('auth-email').value;
+      if (!email) {
+        alert('Please enter your email address in the email field first, then click "Forgot password?".');
+        return;
+      }
+      try {
+        await auth.sendPasswordResetEmail(email);
+        alert('Password reset email sent! Check your inbox (and spam folder).');
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
     }
 
     async function handleAuth(e) {
@@ -716,7 +737,6 @@
       const uniqueLocations = new Set();
       allUsers.forEach(u => {
         if (u.locations) {
-          // Splitting by comma if multiple locations entered in one profile
           u.locations.split(',').forEach(loc => {
             const trimmed = loc.trim();
             if (trimmed) uniqueLocations.add(trimmed);
@@ -741,7 +761,6 @@
       readyList.innerHTML = '';
       selectOpponent.innerHTML = '<option value="">Select opponent...</option>';
 
-      // Read filter values
       const filterGender = document.getElementById('filter-gender').value;
       const filterNtrp = document.getElementById('filter-ntrp').value;
       const filterLocation = document.getElementById('filter-location').value;
@@ -751,7 +770,6 @@
       const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
 
       allUsers.forEach(u => {
-        // Apply Filters
         if (filterGender && u.gender !== filterGender) return;
         if (filterNtrp && u.dynamicNtrp !== filterNtrp) return;
         if (filterLocation) {
@@ -772,7 +790,6 @@
         const ntrpBadge = `<span class="bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded text-[10px] font-semibold">NTRP ${u.dynamicNtrp}</span>`;
         const locBadge = u.locations ? `<span class="text-[11px] text-slate-400 block truncate max-w-[200px]">📍 ${u.locations}</span>` : '';
 
-        // Leaderboard item
         playersList.innerHTML += `
           <div onclick="openPlayerStats('${u.id}')" class="bg-white p-3 rounded-lg border border-slate-200 flex justify-between items-center shadow-sm cursor-pointer hover:border-indigo-300 transition">
             <div class="flex items-center gap-3">
@@ -799,7 +816,6 @@
           </div>
         `;
 
-        // Ready to Play list
         if (isEffectivelyReady) {
           readyList.innerHTML += `
             <div class="bg-white p-3 rounded-lg border border-emerald-200 flex justify-between items-center shadow-sm">
@@ -826,7 +842,6 @@
         readyList.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">No one on court. Click the button above to be first!</p>';
       }
 
-      // Populate Opponent dropdown (unfiltered)
       allUsers.forEach(u => {
         if (currentUser && u.id !== currentUser.uid) {
           selectOpponent.innerHTML += `<option value="${u.id}">${u.name} (${u.rating})</option>`;
@@ -925,7 +940,6 @@
       document.getElementById('stats-player-phone').innerText = player.phone ? `Tel: ${player.phone}` : player.email;
       document.getElementById('stats-player-elo').innerText = player.rating;
 
-      // Populate Questionnaire
       document.getElementById('stats-gender').innerText = player.gender || 'N/A';
       document.getElementById('stats-ntrp').innerText = player.ntrp || 'N/A';
       document.getElementById('stats-dynamic-ntrp').innerText = player.dynamicNtrp;
@@ -984,7 +998,6 @@
       document.getElementById('stats-modal').classList.remove('flex');
     }
 
-    // Edit Profile Questionnaire Modal
     function openEditProfileModal() {
       if (!currentUserData) return;
       document.getElementById('edit-name').value = currentUserData.name || '';

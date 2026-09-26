@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -576,9 +575,10 @@
 
     // Password Reset function
     async function forgotPassword() {
-      const email = document.getElementById('auth-email').value;
+      const email = document.getElementById('auth-email').value.trim();
       if (!email) {
         alert('Please enter your email address in the email field first, then click "Forgot password?".');
+        document.getElementById('auth-email').focus();
         return;
       }
       try {
